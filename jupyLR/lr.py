@@ -1,14 +1,27 @@
-from itertools import ifilter
+from itertools import ifilter, imap
 
 
-def itemstr(item):
-    e, i, n = item
+def expand_item(item, R):
+    rule = R[item[0]]
+    return rule[1], item[1], rule[0]
+
+
+def expand_itemset(itemset, R):
+    return imap(lambda x: expand_item(x, R), itemset)
+
+
+def expand_itemset2(itemset, R):
+    return imap(lambda x: x[:1] + expand_item(x, R), itemset)
+
+
+def itemstr(item, R):
+    e, i, n = expand_item(item, R)
     return ("[%s -> %s . %s" %
                 (n, ' '.join(e[:i]), ' '.join(e[i:]))).strip() + ']'
 
 
-def itemsetstr(itemset, label=''):
-    items = map(itemstr, sorted(itemset))
+def itemsetstr(itemset, R, label=''):
+    items = map(lambda x: itemstr(x, R), sorted(itemset))
     width = reduce(lambda a, b: max(a, len(b)), items, 3)
     label = label and '[' + str(label) + ']' or ''
     build = ["+-%s%s-+" % (label, '-' * (width - len(label)))]
@@ -17,50 +30,37 @@ def itemsetstr(itemset, label=''):
     return '\n'.join(build)
 
 
-def rule_items(rulename, elems):
-    "converts a sequence of elements into a sequence of items"
-    return ((elems, i, rulename) for i in xrange(len(elems) + 1))
-
-
-def items(rules):
-    "convert sequence of rules into a sequence of items"
-    ret = []
-    for rulename, elems in rules:
-        ret.extend(rule_items(rulename, elems))
-    return ret
-
-
-def first(itemset, ruleset):
+def first(itemset, R):
     "set of the tokens at the right of each dot in this item set"
     ret = set()
-    for ruleelems, i, rulename in itemset:
+    for ruleelems, i, rulename in expand_itemset(itemset, R):
         if i == len(ruleelems):
             continue
         e = ruleelems[i]
-        if not e in ruleset:
+        if not e in R:
             ret.add(e)
     return ret
 
 
-def follow(itemset, ruleset):
+def follow(itemset, R):
     "all transitions from an item set in a dictionary [token]->item set"
     print "FOLLOW FOR:"
-    print itemsetstr(itemset)
+    print itemsetstr(itemset, R)
     ret = dict()
-    for ruleelems, i, rulename in itemset:
+    for ruleidx, ruleelems, i, rulename in expand_itemset2(itemset, R):
         if i == len(ruleelems):
             continue
         e = ruleelems[i]
         if e not in ret:
             ret[e] = set()
-        ret[e].update(closure([(ruleelems, i + 1, rulename)], ruleset))
+        ret[e].update(closure([(ruleidx, i + 1)], R))
     for k, v in ret.iteritems():
         print '', k, '->'
-        print itemsetstr(v)
+        print itemsetstr(v, R)
     return ret
 
 
-def closure(itemset, ruleset):
+def closure(itemset, R):
     "the epsilon-closure of this item set"
     C = set(itemset)
     last = -1
@@ -68,15 +68,15 @@ def closure(itemset, ruleset):
         last = len(C)
         Ctmp = set()
         for item in C:
-            elems, i, name = item
+            elems, i, name = expand_item(item, R)
             if i == len(elems):
                 continue
-            if elems[i] in ruleset:
-                Ctmp.update((e, 0, elems[i]) for e in ruleset[elems[i]])
+            if elems[i] in R:
+                Ctmp.update((r, 0) for r in R[elems[i]])
         C.update(Ctmp)
     return C
 
 
 def kernel(itemset):
     "the kernel items in this item set"
-    return set(ifilter(lambda (e, i, n): i != 0 or n == '@', itemset))
+    return set(ifilter(lambda (r, i): not r or i, itemset))

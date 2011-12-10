@@ -27,48 +27,53 @@ def rules(start, grammar, kw):
 
 def ruleset(rules):
     ret = {}
+    counter = 0
     for rulename, elems in rules:
         if rulename not in ret:
             ret[rulename] = []
-        ret[rulename].append(elems)
-    return ret
-
-
-def lr_sets(start, grammar):
-    kw = set()
-    kw.add('$')
-    r = list(rules(start, grammar, kw))
-    R = ruleset(r)
-    I = set(items(r))
-    LR0 = set()
-    x = closure([(R['@'][0], 0, '@')], R)
-    stack = [tuple(sorted(x))]
-    while stack:
-        x = stack.pop()
-        print "set", x
-        LR0.add(x)
-        F = follow(x, R)
-        for t, s in F.iteritems():
-            s = tuple(sorted(s))
-            if s not in LR0:
-                stack.append(s)
-    return LR0, R, r, kw
+        rule = (rulename, elems)
+        ret[rulename].append(counter)
+        ret[counter] = rule
+        counter += 1
+    return ret, counter
 
 
 class parser(object):
 
     def __init__(self, start_sym, grammar):
-        LR0, self.R, self.rules, self.kw_set = lr_sets(start_sym, grammar)
-        self.I = set(items(self.rules))
-        self.initial_items = filter(lambda (e, i, n): i == 0 and n == '@',
-                                    self.I)
-        print "initial items", self.initial_items
-        self.LR0 = list(LR0)
+        self.kw_set = set()
+        self.kw_set.add('$')
+        self.R, counter = ruleset(rules(start_sym, grammar, self.kw_set))
+        self.I = set((r, i) for r in xrange(counter)
+                            for i in xrange(len(self.R[r][1]) + 1))
+        self.compute_lr0()
+        self.LR0 = list(sorted(self.LR0))
         self.LR0_idx = {}
         for i, s in enumerate(self.LR0):
             self.LR0_idx[s] = i
         self.initial_state = self.index(self.initial_items)
         self.compute_ACTION()
+
+    def compute_lr0(self):
+        self.LR0 = set()
+        x = closure([(0, 0)], self.R)
+        self.initial_items = x
+        stack = [tuple(sorted(x))]
+        while stack:
+            x = stack.pop()
+            print "set", x
+            self.LR0.add(x)
+            F = follow(x, self.R)
+            for t, s in F.iteritems():
+                s = tuple(sorted(s))
+                if s not in self.LR0:
+                    stack.append(s)
+
+    def itemstr(self, item):
+        return itemstr(item, self.R)
+
+    def itemsetstr(self, item, label=''):
+        return itemsetstr(item, self.R, label)
 
     def closure(self, s):
         return tuple(sorted(closure(s, self.R)))
@@ -97,18 +102,19 @@ class parser(object):
 
     def next_items(self, item):
         items = []
-        for e, i, n in self.I:
-            if i > 0 and e[i - 1] == item[2]:
+        name = self.R[item[0]][0]
+        for r, e, i, n in expand_itemset2(self.I, self.R):
+            if i > 0 and e[i - 1] == name:
                 if len(e) == i:
-                    items.extend(self.next_items((e, i, n)))
+                    items.extend(self.next_items((r, i)))
                 else:
-                    items.append((e, i, n))
+                    items.append((r, i))
         return items
 
     def following_tokens(self, item):
         items = self.next_items(item)
-        print itemstr(item)
-        print itemsetstr(items)
+        print self.itemstr(item)
+        print self.itemsetstr(items)
         ret = first(closure(items, self.R), self.R)
         ret.add('$')
         print ret
@@ -119,25 +125,25 @@ class parser(object):
         self.ACTION = []
         for s, g in izip(self.LR0, self.GOTO):
             action = self.init_row()
-            reductions = filter(lambda (elems, i, name): i == len(elems), s)
-            if reductions:
-                for k in reductions:
-                    if k[2] == '@':
-                        action['$'].append(('A',))
-                    else:
-                        for kw in self.following_tokens(k):
-                        #for kw in self.kw_set:
-                            action[kw].append(('R', k))
+            # reductions
+            for r, i in ifilter(lambda (r, i): i == len(self.R[r][1]), s):
+                if not r:
+                    action['$'].append(('A',))
+                else:
+                    for kw in self.following_tokens((r, i)):
+                    #for kw in self.kw_set:
+                        action[kw].append(('R', r))
+            # transitions
             for tok, dest in g.iteritems():
                 action[tok].append(('S', dest))
+            # commit
             self.ACTION.append(action)
+        # now show how proud we are of the pretty-print
         print self.action_to_str()
 
     def action_to_str(self):
 
         def ac_str(c):
-            if c[0] == 'R':
-                return 'R:' + c[1][2]
             return ''.join(imap(str, c))
 
         def cell(i, kw):
@@ -202,7 +208,7 @@ class parser(object):
         while True:
             print "state stack", A.state_stack
             print "current input", A.input
-            print itemsetstr(kernel(self.LR0[A.state]))
+            print self.itemsetstr(kernel(self.LR0[A.state]))
             ac = self.ACTION[A.state][A.input[0]]
             print ac
             if len(ac) == 0:
@@ -213,7 +219,8 @@ class parser(object):
                 break
             ac = ac[0]
             if ac[0] == 'R':
-                A.reduce(ac[1][2], ac[1][1])
+                name, elems = self.R[ac[1]]
+                A.reduce(name, len(elems))
                 output.append(ac[1])
             elif ac[0] == 'S':
                 A.shift(ac[1])
@@ -225,6 +232,6 @@ class parser(object):
 
     def dump_sets(self):
         for i, lrset in enumerate(self.LR0):
-            print itemsetstr(lrset, i)
+            print self.itemsetstr(lrset, i)
             print
 #

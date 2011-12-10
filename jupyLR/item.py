@@ -1,111 +1,6 @@
-from parser import Expr, AltExpr
 from tokenizer import tokenize_iter
 import re
 from itertools import ifilter, izip, chain, imap
-
-
-token_re = re.compile(r"[ \t\n]*(?:(?P<word>\w+)|(?P<sep>=))[ \t\n]*",
-                      re.VERBOSE)
-
-
-def itemstr(item):
-    e, i, n = item
-    return ("[%s -> %s . %s" %
-                (n, ' '.join(e[:i]), ' '.join(e[i:]))).strip() + ']'
-
-
-def itemsetstr(itemset, label=''):
-    items = map(itemstr, sorted(itemset))
-    width = reduce(lambda a, b: max(a, len(b)), items, 3)
-    label = label and '[' + str(label) + ']' or ''
-    build = ["+-%s%s-+" % (label, '-' * (width - len(label)))]
-    build.extend("| %-*s |" % (width, item) for item in items)
-    build.append("+-" + "-" * width + '-+')
-    return '\n'.join(build)
-
-
-def rules(start, grammar, kw):
-    words = [start]
-    edit_rule = '@'
-    kw.add(edit_rule)
-    for tokname, tokvalue in tokenize_iter(grammar, token_re):
-        if tokname == 'word':
-            words.append(tokvalue)
-            kw.add(tokvalue)
-        elif tokname == 'sep':
-            tmp = words.pop()
-            yield (edit_rule, tuple(words))
-            edit_rule = tmp
-            words = []
-    yield (edit_rule, tuple(words))
-
-
-def ruleset(rules):
-    ret = {}
-    for rulename, elems in rules:
-        if rulename not in ret:
-            ret[rulename] = []
-        ret[rulename].append(elems)
-    return ret
-
-
-def rule_items(rulename, elems):
-    return ((elems, i, rulename) for i in xrange(len(elems) + 1))
-
-
-def items(rules):
-    ret = []
-    for rulename, elems in rules:
-        ret.extend(rule_items(rulename, elems))
-    return ret
-
-
-def first(itemset, ruleset):
-    ret = set()
-    for ruleelems, i, rulename in itemset:
-        if i == len(ruleelems):
-            continue
-        e = ruleelems[i]
-        if not e in ruleset:
-            ret.add(e)
-    return ret
-
-
-def follow(itemset, ruleset):
-    print "FOLLOW FOR:"
-    print itemsetstr(itemset)
-    ret = dict()
-    for ruleelems, i, rulename in itemset:
-        if i == len(ruleelems):
-            continue
-        e = ruleelems[i]
-        if e not in ret:
-            ret[e] = set()
-        ret[e].update(closure([(ruleelems, i + 1, rulename)], ruleset))
-    for k, v in ret.iteritems():
-        print '', k, '->'
-        print itemsetstr(v)
-    return ret
-
-
-def closure(itemset, ruleset):
-    C = set(itemset)
-    last = -1
-    while len(C) != last:
-        last = len(C)
-        Ctmp = set()
-        for item in C:
-            elems, i, name = item
-            if i == len(elems):
-                continue
-            if elems[i] in ruleset:
-                Ctmp.update((e, 0, elems[i]) for e in ruleset[elems[i]])
-        C.update(Ctmp)
-    return C
-
-
-def kernel(itemset, start):
-    return set(ifilter(lambda (e, i, n): i != 0 or n == '@', itemset))
 
 
 def lr_sets(start, grammar):
@@ -173,19 +68,6 @@ class parser(object):
         items = filter(lambda (e, i, n): e[i - 1] == item[2] and len(e) != i,
                        self.I)
         return first(closure(items, self.R), self.R)
-
-#        def f_iter(thisn):
-#            for e, i, n in self.I:
-#                if e[i - 1] == thisn:
-#                    if i == len(e):
-#                        for k in f_iter(n):
-#                            yield k
-#                    else:
-#                        for k in first(closure([(e, i, n)], self.R), self.R):
-#                            yield k
-#
-#        thise, thisi, thisn = item
-#        return set(f_iter(thisn))
 
     def compute_ACTION(self):
         self.compute_GOTO()

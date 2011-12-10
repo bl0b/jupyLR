@@ -1,3 +1,20 @@
+from itertools import ifilter
+
+
+def itemstr(item):
+    e, i, n = item
+    return ("[%s -> %s . %s" %
+                (n, ' '.join(e[:i]), ' '.join(e[i:]))).strip() + ']'
+
+
+def itemsetstr(itemset, label=''):
+    items = map(itemstr, sorted(itemset))
+    width = reduce(lambda a, b: max(a, len(b)), items, 3)
+    label = label and '[' + str(label) + ']' or ''
+    build = ["+-%s%s-+" % (label, '-' * (width - len(label)))]
+    build.extend("| %-*s |" % (width, item) for item in items)
+    build.append("+-" + "-" * width + '-+')
+    return '\n'.join(build)
 
 
 def rule_items(rulename, elems):
@@ -60,6 +77,6 @@ def closure(itemset, ruleset):
     return C
 
 
-def kernel(itemset, start):
+def kernel(itemset):
     "the kernel items in this item set"
     return set(ifilter(lambda (e, i, n): i != 0 or n == '@', itemset))

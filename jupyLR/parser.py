@@ -1,6 +1,37 @@
 from tokenizer import tokenize_iter
 import re
 from itertools import ifilter, izip, chain, imap
+from tokenizer import make_scanner
+from lr import *
+
+lr_grammar_scanner = make_scanner(
+    sep='=', word=r"\b\w+\b", whitespace=r'[ \t\r\n]+',
+    discard_names=('whitespace',))
+
+
+def rules(start, grammar, kw):
+    words = [start]
+    edit_rule = '@'
+    kw.add(edit_rule)
+    for tokname, tokvalue in lr_grammar_scanner(grammar):
+        if tokname == 'word':
+            words.append(tokvalue)
+            kw.add(tokvalue)
+        elif tokname == 'sep':
+            tmp = words.pop()
+            yield (edit_rule, tuple(words))
+            edit_rule = tmp
+            words = []
+    yield (edit_rule, tuple(words))
+
+
+def ruleset(rules):
+    ret = {}
+    for rulename, elems in rules:
+        if rulename not in ret:
+            ret[rulename] = []
+        ret[rulename].append(elems)
+    return ret
 
 
 def lr_sets(start, grammar):
@@ -64,10 +95,24 @@ class parser(object):
             ret[kw] = [] + init
         return ret
 
-    def follows(self, item):
-        items = filter(lambda (e, i, n): e[i - 1] == item[2] and len(e) != i,
-                       self.I)
-        return first(closure(items, self.R), self.R)
+    def next_items(self, item):
+        items = []
+        for e, i, n in self.I:
+            if i > 0 and e[i - 1] == item[2]:
+                if len(e) == i:
+                    items.extend(self.next_items((e, i, n)))
+                else:
+                    items.append((e, i, n))
+        return items
+
+    def following_tokens(self, item):
+        items = self.next_items(item)
+        print itemstr(item)
+        print itemsetstr(items)
+        ret = first(closure(items, self.R), self.R)
+        ret.add('$')
+        print ret
+        return ret
 
     def compute_ACTION(self):
         self.compute_GOTO()
@@ -80,7 +125,8 @@ class parser(object):
                     if k[2] == '@':
                         action['$'].append(('A',))
                     else:
-                        for kw in self.follows(k):
+                        for kw in self.following_tokens(k):
+                        #for kw in self.kw_set:
                             action[kw].append(('R', k))
             for tok, dest in g.iteritems():
                 action[tok].append(('S', dest))
@@ -125,10 +171,10 @@ class parser(object):
 
             def __init__(self, initial_state, ACTION):
                 self.toki = iter(tokens)
-                self.state_stack = [initial_state]
+                self.state_stack = []
                 self.input_stack = []
                 self.AC = ACTION
-                self.next_token()
+                self.shift(initial_state)
 
             def next_token(self):
                 self.input_stack.append(self.toki.next())
@@ -142,7 +188,7 @@ class parser(object):
             def reduce(self, name, count):
                 print "REDUCE", name, "(%i)" % count
                 self.state_stack = self.state_stack[: - count]
-                self.input_stack = self.input_stack[: - count] + [(name,)]
+                #self.input_stack = self.input_stack[: - count]
                 goto = self.AC[self.state][name]
                 #self.shift(goto[0][1])
                 self.state_stack.append(goto[0][1])
@@ -154,6 +200,9 @@ class parser(object):
         output = []
 
         while True:
+            print "state stack", A.state_stack
+            print "current input", A.input
+            print itemsetstr(kernel(self.LR0[A.state]))
             ac = self.ACTION[A.state][A.input[0]]
             print ac
             if len(ac) == 0:

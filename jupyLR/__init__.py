@@ -1,29 +1,16 @@
-__all__ = ['lr', 'make_scanner']
+__all__ = ['lr', 'Slr', 'make_scanner']
 
 import lr
 from tokenizer import make_scanner
+from parser import parser
+from itertools import chain
 
 
-def rules(start, grammar, kw):
-    words = [start]
-    edit_rule = '@'
-    kw.add(edit_rule)
-    for tokname, tokvalue in tokenize_iter(grammar, token_re):
-        if tokname == 'word':
-            words.append(tokvalue)
-            kw.add(tokvalue)
-        elif tokname == 'sep':
-            tmp = words.pop()
-            yield (edit_rule, tuple(words))
-            edit_rule = tmp
-            words = []
-    yield (edit_rule, tuple(words))
+class Slr(parser):
 
+    def __init__(self, start_sym, grammar, scanner):
+        parser.__init__(self, start_sym, grammar)
+        self.scanner = scanner
 
-def ruleset(rules):
-    ret = {}
-    for rulename, elems in rules:
-        if rulename not in ret:
-            ret[rulename] = []
-        ret[rulename].append(elems)
-    return ret
+    def __call__(self, text):
+        return self.recognize(chain(self.scanner(text), [('$', '$')]))

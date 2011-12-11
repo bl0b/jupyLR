@@ -16,7 +16,7 @@ class Automaton(parser):
 
     def reduce(self, ruleidx):
         self.output.append(ruleidx)
-        name, elems = self.R[ruleidx]
+        name, elems, commit = self.R[ruleidx]
         count = len(elems)
         self.state_stack = self.state_stack[: - count]
         goto = self.ACTION[self.state][name]

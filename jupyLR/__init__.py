@@ -26,10 +26,13 @@ class Slr(Automaton):
 
     def _make_ast(self, rule):
         top = self.ast.pop()
-        name, elems = self.R[rule]
-        ast = tuple(chain([name], self.ast[-len(elems):]))
+        name, elems, commit = self.R[rule]
+        if commit:
+            ast = (tuple(chain([name], self.ast[-len(elems):])),)
+        else:
+            ast = self.ast[-len(elems):]
         self.ast = self.ast[:-len(elems)]
-        self.ast.append(ast)
+        self.ast.append(tuple(chain(*ast)))
         self.ast.append(top)
         print self.ast
         return True

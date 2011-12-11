@@ -5,33 +5,39 @@ from tokenizer import make_scanner
 from lr import *
 
 lr_grammar_scanner = make_scanner(
-    sep='=', word=r"\b\w+\b", whitespace=r'[ \t\r\n]+',
+    sep='=', word=r"\b\w+\b", whitespace=r'[ \t\r\n]+', minus=r'[-]',
     discard_names=('whitespace',))
 
 
 def rules(start, grammar, kw):
     words = [start]
     edit_rule = '@'
+    edit_rule_commit = True
+    next_edit_rule_commit = True
     kw.add(edit_rule)
     for tokname, tokvalue in lr_grammar_scanner(grammar):
+        if tokname == 'minus':
+            next_edit_rule_commit = False
         if tokname == 'word':
             words.append(tokvalue)
             kw.add(tokvalue)
         elif tokname == 'sep':
             tmp = words.pop()
-            yield (edit_rule, tuple(words))
+            yield (edit_rule, tuple(words), edit_rule_commit)
+            edit_rule_commit = next_edit_rule_commit
+            next_edit_rule_commit = True
             edit_rule = tmp
             words = []
-    yield (edit_rule, tuple(words))
+    yield (edit_rule, tuple(words), edit_rule_commit)
 
 
 def ruleset(rules):
     ret = {}
     counter = 0
-    for rulename, elems in rules:
+    for rulename, elems, commit in rules:
         if rulename not in ret:
             ret[rulename] = []
-        rule = (rulename, elems)
+        rule = (rulename, elems, commit)
         ret[rulename].append(counter)
         ret[counter] = rule
         counter += 1

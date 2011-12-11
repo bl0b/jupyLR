@@ -171,65 +171,6 @@ class parser(object):
         return header + '\n'.join(('%3i | ' % i) + row(i)
                                   for i in xrange(len(self.ACTION)))
 
-    def recognize(self, tokens):
-
-        class Automaton(object):
-
-            def __init__(self, initial_state, ACTION):
-                self.toki = iter(tokens)
-                self.state_stack = []
-                self.input_stack = []
-                self.AC = ACTION
-                self.shift(initial_state)
-
-            def next_token(self):
-                self.input_stack.append(self.toki.next())
-                print "NEXT TOKEN", self.input_stack
-
-            def shift(self, next_state):
-                print "SHIFT", next_state
-                self.state_stack.append(next_state)
-                self.next_token()
-
-            def reduce(self, name, count):
-                print "REDUCE", name, "(%i)" % count
-                self.state_stack = self.state_stack[: - count]
-                #self.input_stack = self.input_stack[: - count]
-                goto = self.AC[self.state][name]
-                #self.shift(goto[0][1])
-                self.state_stack.append(goto[0][1])
-
-            state = property(lambda s: s.state_stack[-1])
-            input = property(lambda s: s.input_stack[-1])
-
-        A = Automaton(self.initial_state, self.ACTION)
-        output = []
-
-        while True:
-            print "state stack", A.state_stack
-            print "current input", A.input
-            print self.itemsetstr(kernel(self.LR0[A.state]))
-            ac = self.ACTION[A.state][A.input[0]]
-            print ac
-            if len(ac) == 0:
-                print "ERROR", A.state_stack, A.input_stack
-                break
-            if len(ac) > 1:
-                print "CONFLICT!", ac
-                break
-            ac = ac[0]
-            if ac[0] == 'R':
-                name, elems = self.R[ac[1]]
-                A.reduce(name, len(elems))
-                output.append(ac[1])
-            elif ac[0] == 'S':
-                A.shift(ac[1])
-            elif ac[0] == 'A':
-                print "DONE"
-                break
-            #print A.state_stack, A.input_stack
-        return output
-
     def dump_sets(self):
         for i, lrset in enumerate(self.LR0):
             print self.itemsetstr(lrset, i)

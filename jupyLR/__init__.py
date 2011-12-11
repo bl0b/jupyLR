@@ -15,7 +15,8 @@ class Slr(Automaton):
 
     def shift(self, next_state):
         Automaton.shift(self, next_state)
-        self.ast.append(self.input)
+        if self.shift_tokens:
+            self.ast.append(self.input)
         print self.ast
 
     def reduce(self, ruleidx):
@@ -45,10 +46,12 @@ class Slr(Automaton):
             self.ai = 0
             self.scan_iter = mk_scan(2)
             outfunc = self._make_ast
+            self.shift_tokens = True
         else:
             self.scan_iter = mk_scan(1)
+            self.shift_tokens = False
 
-            def outfunc(rule, inp):
+            def outfunc(rule):
                 self.ast.append(rule)
                 return True
         self._output = outfunc

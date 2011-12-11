@@ -8,9 +8,11 @@ from automaton import Automaton
 
 class Slr(Automaton):
 
-    def __init__(self, start_sym, grammar, scanner):
+    def __init__(self, start_sym, grammar, scanner,
+                 ast_validator=lambda ast: True):
         Automaton.__init__(self, start_sym, grammar)
         self.scanner = scanner
+        self.ast_validator = ast_validator
         # TODO : check keyword sets coherence (partition)
 
     def shift(self, next_state):
@@ -30,13 +32,16 @@ class Slr(Automaton):
         name, elems, commit = self.R[rule]
         if commit:
             ast = (tuple(chain([name], self.ast[-len(elems):])),)
+            ok = self.ast_validator(ast[0])
         else:
             ast = self.ast[-len(elems):]
-        self.ast = self.ast[:-len(elems)]
-        self.ast.append(tuple(chain(*ast)))
-        self.ast.append(top)
-        print self.ast
-        return True
+            ok = True
+        if ok:
+            self.ast = self.ast[:-len(elems)]
+            self.ast.append(tuple(chain(*ast)))
+            self.ast.append(top)
+            print self.ast
+        return ok
 
     def __call__(self, text, build_ast=False):
         self.ast = []

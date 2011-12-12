@@ -1,4 +1,4 @@
-__all__ = ['lr', 'Slr', 'make_scanner']
+__all__ = ['Slr', 'make_scanner']
 
 import lr
 from tokenizer import make_scanner
@@ -15,36 +15,32 @@ class Slr(Automaton):
         self.ast_validator = ast_validator
         # TODO : check keyword sets coherence (partition)
 
-    def shift(self, next_state):
-        Automaton.shift(self, next_state)
+    def shift_hook(self, output, next_state):
         if self.shift_tokens:
-            self.ast.append(self.input)
-        print self.ast
+            output.append(self.input)
+            print "current output", output
 
-    def reduce(self, ruleidx):
-        if self._output(ruleidx):
-            Automaton.reduce(self, ruleidx)
-            return True
-        return False
+    def reduce_hook(self, output, ruleidx):
+        return self._output(output, ruleidx)
 
-    def _make_ast(self, rule):
-        top = self.ast.pop()
+    def _make_ast(self, output, rule):
+        print "_make_ast", output, rule
+        top = output.pop()
         name, elems, commit = self.R[rule]
         if commit:
-            ast = (tuple(chain([name], self.ast[-len(elems):])),)
+            ast = (tuple(chain([name], output[-len(elems):])),)
             ok = self.ast_validator(ast[0])
         else:
-            ast = self.ast[-len(elems):]
+            ast = output[-len(elems):]
             ok = True
         if ok:
-            self.ast = self.ast[:-len(elems)]
-            self.ast.append(tuple(chain(*ast)))
-            self.ast.append(top)
-            print self.ast
+            del output[:-len(elems)]
+            output.append(tuple(chain(*ast)))
+            output.append(top)
+            print "current output", output
         return ok
 
     def __call__(self, text, build_ast=False):
-        self.ast = []
         mk_scan = lambda n: tee(chain(self.scanner(text), [('$', '$')]), n)
         if build_ast:
             self.ii = 0
@@ -56,9 +52,8 @@ class Slr(Automaton):
             self.scan_iter = mk_scan(1)
             self.shift_tokens = False
 
-            def outfunc(rule):
-                self.ast.append(rule)
+            def outfunc(output, rule):
+                output.append(rule)
                 return True
         self._output = outfunc
-        ok = self.recognize(self.scan_iter[0])
-        return ok, self.ast
+        return self.recognize(self.scan_iter[0])

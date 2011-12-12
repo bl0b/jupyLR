@@ -67,7 +67,6 @@ class parser(object):
         stack = [tuple(sorted(x))]
         while stack:
             x = stack.pop()
-            print "set", x
             self.LR0.add(x)
             F = follow(x, self.R)
             for t, s in F.iteritems():
@@ -119,11 +118,8 @@ class parser(object):
 
     def following_tokens(self, item):
         items = self.next_items(item)
-        print self.itemstr(item)
-        print self.itemsetstr(items)
         ret = first(closure(items, self.R), self.R)
         ret.add('$')
-        print ret
         return ret
 
     def compute_ACTION(self):
@@ -144,8 +140,6 @@ class parser(object):
                 action[tok].append(('S', dest))
             # commit
             self.ACTION.append(action)
-        # now show how proud we are of the pretty-print
-        print self.action_to_str()
 
     def action_to_str(self):
 
@@ -181,4 +175,3 @@ class parser(object):
         for i, lrset in enumerate(self.LR0):
             print self.itemsetstr(lrset, i)
             print
-#

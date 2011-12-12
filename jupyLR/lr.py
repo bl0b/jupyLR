@@ -44,8 +44,6 @@ def first(itemset, R):
 
 def follow(itemset, R):
     "all transitions from an item set in a dictionary [token]->item set"
-    print "FOLLOW FOR:"
-    print itemsetstr(itemset, R)
     ret = dict()
     for ruleidx, ruleelems, i, rulename in expand_itemset2(itemset, R):
         if i == len(ruleelems):
@@ -54,9 +52,6 @@ def follow(itemset, R):
         if e not in ret:
             ret[e] = set()
         ret[e].update(closure([(ruleidx, i + 1)], R))
-    for k, v in ret.iteritems():
-        print '', k, '->'
-        print itemsetstr(v, R)
     return ret
 
 

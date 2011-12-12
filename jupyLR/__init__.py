@@ -18,42 +18,39 @@ class Slr(Automaton):
     def shift_hook(self, output, next_state):
         if self.shift_tokens:
             output.append(self.input)
-            print "current output", output
+            print id(output), 'S%-3i' % next_state, output
 
     def reduce_hook(self, output, ruleidx):
         return self._output(output, ruleidx)
 
     def _make_ast(self, output, rule):
-        print "_make_ast", output, rule
-        top = output.pop()
+        # FIXME: this last output token is the result of bad design.
+        # FIXME: it's actually the NEXT TOKEN that the parser currently sees,
+        # FIXME: not the lastly consumed token.
+        top = output and output.pop() or None
         name, elems, commit = self.R[rule]
+        if len(output) < len(elems):
+            return False
+        slc = - len(elems)
         if commit:
-            ast = (tuple(chain([name], output[-len(elems):])),)
+            ast = (tuple(chain([name], output[slc:])),)
             ok = self.ast_validator(ast[0])
         else:
-            ast = output[-len(elems):]
+            ast = output[slc:]
             ok = True
         if ok:
-            del output[:-len(elems)]
+            del output[slc:]
             output.append(tuple(chain(*ast)))
-            output.append(top)
-            print "current output", output
+            top is not None and output.append(top)
+            print id(output), 'R%-3i' % rule, output
         return ok
 
     def __call__(self, text, build_ast=False):
-        mk_scan = lambda n: tee(chain(self.scanner(text), [('$', '$')]), n)
+        self.shift_tokens = build_ast
         if build_ast:
             self.ii = 0
             self.ai = 0
-            self.scan_iter = mk_scan(2)
-            outfunc = self._make_ast
-            self.shift_tokens = True
+            self._output = self._make_ast
         else:
-            self.scan_iter = mk_scan(1)
-            self.shift_tokens = False
-
-            def outfunc(output, rule):
-                output.append(rule)
-                return True
-        self._output = outfunc
-        return self.recognize(self.scan_iter[0])
+            self._output = lambda output, rule: output.append(rule) or True
+        return self.recognize(chain(self.scanner(text), [('$', '$')]))

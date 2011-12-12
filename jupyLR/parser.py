@@ -52,6 +52,7 @@ class parser(object):
         self.R, counter = ruleset(rules(start_sym, grammar, self.kw_set))
         self.I = set((r, i) for r in xrange(counter)
                             for i in xrange(len(self.R[r][1]) + 1))
+        self.rules_count = counter
         self.compute_lr0()
         self.LR0 = list(sorted(self.LR0))
         self.LR0_idx = {}
@@ -59,6 +60,20 @@ class parser(object):
             self.LR0_idx[s] = i
         self.initial_state = self.index(self.initial_items)
         self.compute_ACTION()
+
+    def __str__(self):
+        return '\n'.join(self.R[r][0] + ' = ' + ' '.join(self.R[r][1])
+                         for r in xrange(self.rules_count))
+
+    def conflicts(self):
+        return filter(lambda (i, t): len(self.ACTION[i][t]) > 1,
+                      ((i, t) for i, row in enumerate(self.ACTION)
+                         for t in row.iterkeys()))
+
+    def count_conflicts(self):
+        return reduce(lambda a, b: a + (len(b) > 1 and 1 or 0),
+                      (a for row in self.ACTION for a in row.itervalues()),
+                      0)
 
     def compute_lr0(self):
         self.LR0 = set()

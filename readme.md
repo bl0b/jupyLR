@@ -3,7 +3,7 @@
 An old-school parsing framework that implements the time-honoured scanner+parser stack.
 
 Lexical analysis is performed with regular expressions (as described in http://stackoverflow.com/a/2359619).
-Parsing is done with an SLR algorithm. There might be support for GLR parsing in some future.
+Parsing is done with the GLR algorithm based on an SLR automaton.
 
 ## Synopsis
 
@@ -47,8 +47,8 @@ defines a rule name, and all other words after the equal sign are the production
 
 ### Parser
 
-The parsing algorithm is Simple LR (SLR). The LR(0) sets and action/goto tables are computed on the fly when the Slr instance
-is created.
+The parsing algorithm is Generalized LR (SLR). The LR(0) sets and action/goto tables are computed on the fly when the Slr instance
+is created. Support for serialization is planned very soon to avoid recomputing the automaton for big grammars.
 For the user's convenience, the parser is callable, taking a string and outputting the stream of productions which can be used
 to build an AST.
 

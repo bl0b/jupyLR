@@ -120,15 +120,18 @@ class parser(object):
             ret[kw] = [] + init
         return ret
 
-    def next_items(self, item):
-        items = []
+    def next_items(self, item, visited=None):
+        items = set()
+        if visited is None:
+            visited = set()
         name = self.R[item[0]][0]
         for r, e, i, n in expand_itemset2(self.I, self.R):
-            if i > 0 and e[i - 1] == name:
+            if i > 0 and e[i - 1] == name and (r, i) not in visited:
+                visited.add((r, i))
                 if len(e) == i:
-                    items.extend(self.next_items((r, i)))
+                    items.update(self.next_items((r, i), visited))
                 else:
-                    items.append((r, i))
+                    items.add((r, i))
         return items
 
     def following_tokens(self, item):

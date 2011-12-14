@@ -2,101 +2,107 @@ from parser import parser
 from itertools import chain, ifilter
 
 
+class stack_item(object):
+    def __init__(self, prev, x):
+        self.prev = prev
+        self.data = x
+
+    def __str__(self):
+        return "stack_item<%s>" % str(self.data)
+
+    __repr__ = __str__
+
+
+class stack(object):
+    def __init__(self, A):
+        self.active = []
+        self.A = A
+        self.count_active = 0
+
+    def enumerate_active(self):
+        i = 0
+        while i < len(self.active):
+            yield i, self.active[i]
+            i += 1
+
+    def shift(self, source, token, state):
+        sit = stack_item([source], token)
+        sis = stack_item([sit], state)
+        self.active.append(sis)
+
+    def rec_path(self, node, n):
+        if n == -1:
+            return [[]]
+        if not node.prev:
+            return None
+        ret = [path for prev in node.prev
+               for path in self.rec_path(prev, n - 1)
+               if path is not None]
+        return ret
+
+    def reduce(self, node, ruleidx):
+        name, elems, commit = self.A.R[ruleidx]
+        pathes = self.rec_path(node, len(elems) * 2)
+        print "---------------------------------"
+        print '\n'.join(map(str, pathes))
+        print "================================="
+        for path in pathes:
+            tokens = path[1::2]
+            if commit:
+                ast = (tuple(chain([name], tokens)),)
+                ok = self.A.validate_ast(ast)
+            else:
+                ast = tokens
+                ok = True
+            if ok:
+                goto = self.A.ACTION[path[0].data][name]
+                self.shift(path[0], ast, goto)
+
+    def merge(self):
+        merged_s = {}
+        for node in self.active[self.count_active:]:
+            state = node.data
+            if state in merged_s:
+                merged_s[state].prev.extend(node.prev)
+            else:
+                merged_s[state] = node
+        self.active = merged_s.values()
+        self.count_active = len(self.active)
+
+    def accepts(self):
+        AC = self.A.ACTION
+        return [output for state, output in self.active
+                       if AC[state]['$'] and AC[state]['$'][0] == 'A']
+
+
 class Automaton(parser):
 
-    class Process(object):
-
-        def __init__(self, A, parent):
-            self.state_stack = parent and list(parent.state_stack) or []
-            self.output = []
-            self.A = A
-            A.processes.add(self)
-
-        def shift(self, next_state):
-            #print id(self), "SHIFT", next_state
-            self.state_stack.append(next_state)
-            self.A.shift_hook(self.output, next_state)
-
-        def reduce(self, ruleidx):
-            #print id(self), "REDUCE", ruleidx
-            #self.output.append(ruleidx)
-            name, elems, commit = self.A.R[ruleidx]
-            count = len(elems)
-            self.state_stack = self.state_stack[: - count]
-            goto = self.A.ACTION[self.state][name]
-            self.state_stack.append(goto[0][1])
-            return self.A.reduce_hook(self.output, ruleidx)
-
-        def __hash__(self):
-            return id(self)
-
-        state = property(lambda s: s.state_stack[-1])
-
-    def shift_hook(self, output, next_state):
-        pass
-
-    def reduce_hook(self, output, ruleidx):
+    def validate_ast(self, ast):
         return True
 
-    def init(self, token_stream):
-        self.toki = iter(token_stream)
-        self.processes = set()
-        p = Automaton.Process(self, None)
-        self.input_stack = [self.toki.next()]
-        p.shift(self.initial_state)
-
-    input = property(lambda s: s.input_stack[-1])
-
-    def shifts_reds(self, blacklist=[]):
-        print "shifts_reds blacklist", blacklist
-        shifts = []
-        reductions = []
-        accepts = []
-        # helper to spawn a new process for each action but the first.
-        spawn = lambda p, aclist: aclist \
-                                  and [(p, aclist[0])] \
-                                      + [(Automaton.Process(self, p), ac)
-                                         for ac in aclist[1:]] \
-                                  or []
-        pcopy = set(self.processes)
-        actions = lambda p: filter(lambda x: x not in blacklist,
-                                   self.ACTION[p.state][self.input[0]])
-        pac = chain(*[spawn(p, actions(p)) for p in pcopy])
-        for (p, ac) in pac:
-            if ac[0] == 'S':
-                shifts.append((p, ac))
-            if ac[0] == 'R':
-                reductions.append((p, ac))
-            if ac[0] == 'A':
-                accepts.append(p)
-        print "shifts", shifts, "reductions", reductions,
-        print "accepts", accepts
-        return shifts, reductions, accepts
-
     def recognize(self, token_stream):
-        self.init(token_stream)
-        accepting = []
-        red_blacklist = set()
-        while len(self.processes):
-            shifts, reductions, accepts = self.shifts_reds()
-            accepting.extend(accepts)
-            self.processes.difference_update(accepts)
-
-            while reductions:
-                for p, (red, rule) in reductions:
-                    if not p.reduce(rule):
-                        #print "process", id(p.output),
-                        #print "failed to reduce; blacklisting", (red, rule)
-                        self.processes.remove(p)
-                        red_blacklist.add((red, rule))
-                shifts, reductions, accepts = self.shifts_reds(red_blacklist)
-                accepting.extend(accepts)
-                self.processes.difference_update(accepts)
-
-            if shifts:
-                red_blacklist = set()
-                self.input_stack.append(self.toki.next())
-                for p, (shift, state) in shifts:
-                    p.shift(state)
-
-        return [acc.output for acc in accepting]
+        S = stack(self)
+        toki = iter(token_stream)
+        S.shift(None, toki.next(), 0)
+        for cur_tok in token_stream:
+            print S.active
+            if len(S.active) == 0:
+                return None
+            if cur_tok == ('$', '$'):
+                return S.accepts()
+            # Reduce phase
+            for i, node in S.enumerate_active():
+                state = node.data
+                for r, rule in ifilter(lambda x: x[0] == 'R',
+                                       self.ACTION[state][cur_tok[0]]):
+                    S.reduce(node, rule)
+                i += 1
+            # Shift phase
+            for i, node in S.enumerate_active():
+                state = node.data
+                for r, state in ifilter(lambda x: x[0] == 'S',
+                                       self.ACTION[state][cur_tok[0]]):
+                    S.shift(node, cur_tok, state)
+                i += 1
+            # Merge states
+            S.merge()

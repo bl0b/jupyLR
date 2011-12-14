@@ -60,15 +60,19 @@ By default each rule produces an AST node in the form (rule_name, contents...). 
 name in the grammar to make this rule transient in the AST.
 
 For instance :
+
     E = E plus B
     E = B
     B = 1
+
 with the text "1+1" will produce (E (E (B (one, 1))) (plus, +) (E (B (one, 1)))).
 
 The variant :
+
     E = E plus B
     -E = B
     B = 1
+
 with the same text will produce (E (B (one, 1)) (plus, +) (B (one, 1))).
 
 ## How to use jupyLR

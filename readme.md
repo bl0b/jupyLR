@@ -60,9 +60,7 @@ git clone git://github.com/bl0b/jupyLR.git
 
 ## TODO
 
- * Better API
- * Redesign the insides, so the items and item sets are actually sortable
- * draw the automaton using pydot or something
  * fill in "How to use jupyLR" section in this readme
+ * draw the automaton using pydot or something
  * ...
  * PROFIT!

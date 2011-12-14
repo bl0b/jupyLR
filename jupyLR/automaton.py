@@ -28,15 +28,15 @@ class stack(object):
             i += 1
 
     def shift(self, source, token, state):
-        printlist(self.rec_all_pathes(source), "before shift: ")
+        #printlist(self.rec_all_pathes(source), "before shift: ")
         sit = stack_item([source], token)
         sis = stack_item([sit], state)
         self.active.append(sis)
-        printlist(self.rec_all_pathes(sis), "after shift: ")
+        #printlist(self.rec_all_pathes(sis), "after shift: ")
         #print "shift", source, token, state, self.active
 
     def rec_path(self, node, n):
-        print "rec_path(%s, %s)" % (str(node), str(n))
+        #print "rec_path(%s, %s)" % (str(node), str(n))
         if n == 0:
             return [[node]]
         if not node.prev:
@@ -58,9 +58,9 @@ class stack(object):
     def reduce(self, node, ruleidx):
         name, elems, commit = self.A.R[ruleidx]
         pathes = self.rec_path(node, len(elems) * 2)
-        print "---------------------------------"
-        print 'R'+'\nR'.join(map(str, pathes))
-        print "================================="
+        #print "---------------------------------"
+        #print 'R'+'\nR'.join(map(str, pathes))
+        #print "================================="
         for path in pathes:
             tokens = [e for el in path[1::2] for e in el]
             if commit:
@@ -71,7 +71,7 @@ class stack(object):
                 ok = True
             if ok:
                 goto = self.A.ACTION[path[0].data][name]
-                print goto
+                #print goto
                 self.shift(path[0], ast, goto[0][1])
 
     def merge(self):
@@ -89,21 +89,17 @@ class stack(object):
         AC = self.A.ACTION
         is_accepting = lambda state: len(AC[state]['$']) > 0 \
                                      and AC[state]['$'][0][0] == 'A'
-        print printlist(map(str, ((node.data, AC[node.data]['$'],
-                                   is_accepting(node.data), output)
-                                  for node in self.active
-                                  for output in node.prev)), 'ACCEPT: ')
-        ## The [1:] slice is put there to get rid of the leading None token in
-        ## the stack.
-        #return [path[::2] for node in self.active
-        #                   if is_accepting(node.data)
-        #                  for path in self.rec_all_pathes(node)]
+        #print printlist(map(str, ((node.data, AC[node.data]['$'],
+        #                           is_accepting(node.data), output)
+        #                          for node in self.active
+        #                          for output in node.prev)), 'ACCEPT: ')
 
         # Ast's are always encapsulated inside a 1-uple. We don't want that
         # in the output. Hence the [0].
-        return [prev.data[0] for node in self.active
-                              if is_accepting(node.data)
-                             for prev in node.prev]
+        return [path[-2][0] for node in self.active
+                             if is_accepting(node.data)
+                            for path in self.rec_all_pathes(node)
+                             if len(path) == 4]
 
 
 class Automaton(parser):
@@ -116,8 +112,8 @@ class Automaton(parser):
         #toki = iter(token_stream)
         S.shift(None, None, 0)
         for cur_tok in token_stream:
-            print 'ACTIVE STATES', S.active, 'TOKEN', cur_tok
-            print 'STACK' + "\nSTACK".join(map(str, chain(*(S.rec_all_pathes(n) for n in S.active))))
+            #print 'ACTIVE STATES', S.active, 'TOKEN', cur_tok
+            #print 'STACK' + "\nSTACK".join(map(str, chain(*(S.rec_all_pathes(n) for n in S.active))))
             if len(S.active) == 0:
                 break
             # Reduce phase

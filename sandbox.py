@@ -9,12 +9,16 @@ from jupyLR import *
 #
 
 
-#alpha = ''.join(chr(x) for x in xrange(ord('a'), ord('z') + 1))
+alpha = ''.join(chr(x) for x in xrange(ord('a'), ord('z') + 1))
 #alpha = "abc"
-#template = "E = %c E %c E = %c"
-#grammar = ' '.join(template % ((c,) * 3) for c in alpha)
-#tokens = dict((c, c) for c in alpha)
-#pal = Slr('E', grammar, make_scanner(**tokens))
+template = "E = %c E %c E = %c E = %c %c"
+grammar = ' '.join(template % ((c,) * 5) for c in alpha)
+tokens = dict((c, c) for c in alpha)
+tokens['discard_names'] = ['ws']
+tokens['ws'] = '[ \t\n]+'
+print "Computing palindrom SLR table. Please be patient..."
+pal = Slr('E', grammar, make_scanner(**tokens))
+print "Done!"
 #print pal.action_to_str()
 
 

@@ -52,6 +52,25 @@ is created. Support for serialization is planned very soon to avoid recomputing 
 For the user's convenience, the parser is callable, taking a string and outputting the stream of productions which can be used
 to build an AST.
 
+### AST and progressive disambiguation
+
+As the GLR progresses in the parsing, it maintains up-to-date AST and validates each new AST node before continuing.
+
+By default each rule produces an AST node in the form (rule_name, contents...). A dash ("-") can be prepended to a rule
+name in the grammar to make this rule transient in the AST.
+
+For instance :
+    E = E plus B
+    E = B
+    B = 1
+with the text "1+1" will produce (E (E (B (one, 1))) (plus, +) (E (B (one, 1)))).
+
+The variant :
+    E = E plus B
+    -E = B
+    B = 1
+with the same text will produce (E (B (one, 1)) (plus, +) (B (one, 1))).
+
 ## How to use jupyLR
 
 ### Git

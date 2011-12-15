@@ -1,7 +1,7 @@
-__all__ = ['Slr', 'make_scanner']
+__all__ = ['Slr', 'Scanner', 'make_scanner']
 
 import lr
-from tokenizer import make_scanner
+from tokenizer import make_scanner, Scanner
 from itertools import chain, tee, imap, izip_longest
 from automaton import Automaton
 

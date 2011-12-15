@@ -1,8 +1,10 @@
 from parser import parser
 from itertools import chain, ifilter
 
+
 def printlist(l, pfx):
     print pfx + ('\n' + pfx).join(map(str, l))
+
 
 class stack_item(object):
     def __init__(self, prev, x):
@@ -111,9 +113,11 @@ class Automaton(parser):
         S = stack(self)
         #toki = iter(token_stream)
         S.shift(None, None, 0)
+        S.count_active = 1
         for cur_tok in token_stream:
             #print 'ACTIVE STATES', S.active, 'TOKEN', cur_tok
-            #print 'STACK' + "\nSTACK".join(map(str, chain(*(S.rec_all_pathes(n) for n in S.active))))
+            #print 'STACK' + "\nSTACK".join(map(str,
+            #  chain(*(S.rec_all_pathes(n) for n in S.active))))
             if len(S.active) == 0:
                 break
             # Reduce phase

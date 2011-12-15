@@ -3,7 +3,7 @@
 import jupyLR
 from jupyLR import *
 
-#a = Slr('E', 'E = a E a E = a', make_scanner(a='a', b='b'))
+#a = Automaton('E', 'E = a E a E = a', Scanner(a='a', b='b'))
 #x = a('aaa')
 #print "x =", x
 #
@@ -17,9 +17,9 @@ tokens = dict((c, c) for c in alpha)
 tokens['discard_names'] = ['ws']
 tokens['ws'] = '[ \t\n]+'
 print "Computing palindrom SLR table. Please be patient..."
-pal = Slr('E', grammar, make_scanner(**tokens))
+pal = Automaton('E', grammar, Scanner(**tokens))
 print "Done!"
 #print pal.action_to_str()
 
 
-b = Slr('E', 'E = a E = a a E = E E', make_scanner(a='a'))
+b = Automaton('E', 'E = a E = a a E = E E', Scanner(a='a'))

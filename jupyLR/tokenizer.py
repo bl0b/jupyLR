@@ -1,4 +1,4 @@
-__all__ = ["TokenizerException", "make_scanner"]
+__all__ = ["TokenizerException", "Scanner", "make_scanner"]
 
 import re
 from itertools import chain
@@ -31,30 +31,36 @@ def tokenize_iter(text, token_re, discard_names={}, discard_values={}):
 # End of adapted code
 
 
+class Scanner(object):
+
+    def __init__(self, **tokens):
+        """Each named keyword is a token type and its value is the
+        corresponding regular expression. Returns a function that iterates
+        tokens in the form (type, value) over a string.
+
+        Special keywords are discard_names and discard_values, which specify
+        lists (actually any iterable is accepted) containing tokens names or
+        values that must be discarded from the scanner output.
+        """
+        if 'discard_names' in tokens:
+            self.discard_names = set(tokens['discard_names'])
+            del tokens['discard_names']
+        else:
+            self.discard_names = []
+        if 'discard_values' in tokens:
+            self.discard_values = set(tokens['discard_values'])
+            del tokens['discard_values']
+        else:
+            self.discard_values = []
+        self.re = re.compile('|'.join('(?P<%s>%s)' % (k, v)
+                             for k, v in tokens.iteritems()), re.VERBOSE)
+        self.tokens = tokens
+
+    def __call__(self, text):
+        "Iteratively scans through text and yield each token"
+        return tokenize_iter(text, self.re,
+                             self.discard_names, self.discard_values)
+
+
 def make_scanner(**tokens):
-    """Each named keyword is a token type and its value is the corresponding
-    regular expression. Returns a function that iterates tokens in the form
-    (type, value) over a string.
-
-    Special keywords are discard_names and discard_values, which specify lists
-    containing tokens names or values that must be discarded from the scanner
-    output.
-
-    As an undocumented feature, the scanner holds the list of token types in
-    its attribute 'tokens'.
-    """
-    if 'discard_names' in tokens:
-        discard_names = tokens['discard_names']
-        del tokens['discard_names']
-    else:
-        discard_names = []
-    if 'discard_values' in tokens:
-        discard_values = tokens['discard_values']
-        del tokens['discard_values']
-    else:
-        discard_values = []
-    t_re = re.compile('|'.join('(?P<%s>%s)' % (k, v)
-                      for k, v in tokens.iteritems()), re.VERBOSE)
-    ret = lambda txt: tokenize_iter(txt, t_re, discard_names, discard_values)
-    ret.tokens = tokens
-    return ret
+    return Scanner(**tokens)

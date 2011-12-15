@@ -1,7 +1,7 @@
 __all__ = ['Automaton']
 
 from parser import parser
-from itertools import ifilter
+from itertools import ifilter, chain
 from stack import stack
 
 

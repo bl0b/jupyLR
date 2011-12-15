@@ -1,4 +1,4 @@
-__all__ = ["TokenizerException", "Scanner", "make_scanner"]
+__all__ = ["TokenizerException", "Scanner", "make_scanner", "token_line_col"]
 
 import re
 from itertools import chain
@@ -7,6 +7,16 @@ from itertools import chain
 # (url split in 2 to please pep8)
 #http://stackoverflow.com/questions/2358890
 #/python-lexical-analysis-and-tokenization
+
+
+def token_line_col(text, tok):
+    line = text.count('\n', 0, tok[2]) + 1
+    offset = text.rfind('\n', 0, tok[2])
+    if offset == -1:
+        column = tok[2] + 1
+    else:
+        column = offset + 1
+    return line, column
 
 
 class TokenizerException(Exception):
@@ -22,8 +32,9 @@ def tokenize_iter(text, token_re, discard_names={}, discard_values={}):
         pos = m.end()
         tokname = m.lastgroup
         tokvalue = m.group(tokname)
+        tokpos = m.start()
         if tokname not in discard_names and tokvalue not in discard_values:
-            yield tokname, tokvalue
+            yield tokname, tokvalue, tokpos
     if pos != len(text):
         msg = 'tokenizer stopped at pos %r of %r in "%s" at "%s"' % (
                 pos, len(text), text, text[pos:pos + 3])

@@ -15,7 +15,7 @@ def rules(start, grammar, kw):
     edit_rule_commit = True
     next_edit_rule_commit = True
     kw.add(edit_rule)
-    for tokname, tokvalue in lr_grammar_scanner(grammar):
+    for tokname, tokvalue, tokpos in lr_grammar_scanner(grammar):
         if tokname == 'minus':
             next_edit_rule_commit = False
         if tokname == 'word':
@@ -46,8 +46,8 @@ def ruleset(rules):
 
 class parser(object):
 
-    def __init__(self, start_sym, grammar):
-        self.kw_set = set()
+    def __init__(self, start_sym, grammar, scanner_kw=[]):
+        self.kw_set = set(scanner_kw)
         self.kw_set.add('$')
         self.R, counter = ruleset(rules(start_sym, grammar, self.kw_set))
         self.I = set((r, i) for r in xrange(counter)

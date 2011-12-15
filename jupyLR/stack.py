@@ -24,6 +24,7 @@ class stack(object):
         self.active = []
         self.A = A
         self.count_active = 0
+        self.previously_active = []
 
     def enumerate_active(self):
         i = 0
@@ -80,6 +81,7 @@ class stack(object):
 
     def merge(self):
         merged_s = {}
+        self.previously_active = self.active[:self.count_active]
         for node in self.active[self.count_active:]:
             state = node.data
             if state in merged_s:

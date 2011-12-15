@@ -22,4 +22,4 @@ print "Done!"
 #print pal.action_to_str()
 
 
-b = Automaton('E', 'E = a E = a a E = E E', Scanner(a='a'))
+b = Automaton('E', 'E = a E = a a E = E E', Scanner(a='a', b='b'))

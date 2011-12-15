@@ -7,9 +7,9 @@ Parsing is done with the GLR algorithm based on an SLR automaton.
 
 ## Synopsis
 
-    from jupyLR import make_scanner, Slr
+    from jupyLR import Scanner, Automaton
 
-    my_scanner = make_scanner(zero='0', one='1', star='[*]', plus='[+]')
+    my_scanner = Scanner(zero='0', one='1', star='[*]', plus='[+]')
 
     grammar = """
         E = E plus B
@@ -19,14 +19,14 @@ Parsing is done with the GLR algorithm based on an SLR automaton.
         B = one
     """
 
-    a = Slr('E', grammar, my_scanner)
+    a = Automaton('E', grammar, my_scanner)
 
     a('1+1')
 
 ### Scanner
 
 The scanner converts a text into a stream of tokens. A token is a pair (token_type, token_value).
-jupyLR provides a convenient way to define a scanner with the function make_scanner(). As its docstring states:
+jupyLR provides a convenient way to define a scanner with the Scanner class. As the __init__ docstring states:
 
 Each named keyword is a token type and its value is the corresponding
 regular expression. Returns a function that iterates tokens in the form
@@ -47,7 +47,7 @@ defines a rule name, and all other words after the equal sign are the production
 
 ### Parser
 
-The parsing algorithm is Generalized LR (SLR). The LR(0) sets and action/goto tables are computed on the fly when the Slr instance
+The parsing algorithm is Generalized LR (GLR). The LR(0) sets and SLR action/goto tables are computed on the fly when the Automaton instance
 is created. Support for serialization is planned very soon to avoid recomputing the automaton for big grammars.
 For the user's convenience, the parser is callable, taking a string and outputting the stream of productions which can be used
 to build an AST.

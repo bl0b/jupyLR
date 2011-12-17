@@ -5,8 +5,8 @@ from tokenizer import make_scanner
 from lr import *
 
 lr_grammar_scanner = make_scanner(
-    sep='=', word=r"\b\w+\b", whitespace=r'[ \t\r\n]+', minus=r'[-]',
-    discard_names=('whitespace',))
+    sep='=', alt='[|]', word=r"\b\w+\b", whitespace=r'[ \t\r\n]+',
+    minus=r'[-]', discard_names=('whitespace',))
 
 
 def rules(start, grammar, kw):
@@ -21,6 +21,9 @@ def rules(start, grammar, kw):
         if tokname == 'word':
             words.append(tokvalue)
             kw.add(tokvalue)
+        elif tokname == 'alt':
+            yield (edit_rule, tuple(words), edit_rule_commit)
+            words = []
         elif tokname == 'sep':
             tmp = words.pop()
             yield (edit_rule, tuple(words), edit_rule_commit)
@@ -66,16 +69,19 @@ class parser(object):
                          for r in xrange(self.rules_count))
 
     def conflicts(self):
+        "Returns the list of conflicts in the ACTION table."
         return filter(lambda (i, t): len(self.ACTION[i][t]) > 1,
                       ((i, t) for i, row in enumerate(self.ACTION)
                          for t in row.iterkeys()))
 
     def count_conflicts(self):
+        "Returns the count of conflicts in the ACTION table."
         return reduce(lambda a, b: a + (len(b) > 1 and 1 or 0),
                       (a for row in self.ACTION for a in row.itervalues()),
                       0)
 
     def compute_lr0(self):
+        "Compute the LR(0) sets."
         self.LR0 = set()
         x = closure([(0, 0)], self.R)
         self.initial_items = x
@@ -90,21 +96,28 @@ class parser(object):
                     stack.append(s)
 
     def itemstr(self, item):
+        "Stringify an item for pretty-print."
         return itemstr(item, self.R)
 
     def itemsetstr(self, item, label=''):
+        "Stringify an item set for pretty-print."
         return itemsetstr(item, self.R, label)
 
     def closure(self, s):
+        "Compute the closure of an item set."
         return tuple(sorted(closure(s, self.R)))
 
     def kernel(self, s):
+        "Compute the kernel of an item set."
         return kernel(s, self.R)
 
     def index(self, s):
+        """Returns the index of (the closure of) item set s in the LR(0) sets
+        list."""
         return self.LR0_idx[self.closure(s)]
 
     def compute_GOTO(self):
+        "Compute the GOTO table."
         self.GOTO = []
         for s in self.LR0:
             f = {}
@@ -113,6 +126,7 @@ class parser(object):
             self.GOTO.append(f)
 
     def init_row(self, init=None):
+        "Initialize a row of the ACTION table."
         if init is None:
             init = []
         ret = {}
@@ -121,6 +135,7 @@ class parser(object):
         return ret
 
     def next_items(self, item, visited=None):
+        "Compute the yet unvisited items following the given item."
         items = set()
         if visited is None:
             visited = set()
@@ -135,12 +150,14 @@ class parser(object):
         return items
 
     def following_tokens(self, item):
+        "Returns all tokens following the current item."
         items = self.next_items(item)
         ret = first(closure(items, self.R), self.R)
         ret.add('$')
         return ret
 
     def compute_ACTION(self):
+        "Compute the ACTION/GOTO table."
         self.compute_GOTO()
         self.ACTION = []
         for s, g in izip(self.LR0, self.GOTO):
@@ -160,6 +177,7 @@ class parser(object):
             self.ACTION.append(action)
 
     def action_to_str(self):
+        "Stringify the ACTION/GOTO table for pretty-print."
 
         def ac_str(c):
             return ''.join(imap(str, c))
@@ -190,6 +208,7 @@ class parser(object):
                                   for i in xrange(len(self.ACTION)))
 
     def dump_sets(self):
+        "Pretty-print all LR(0) item sets."
         for i, lrset in enumerate(self.LR0):
             print self.itemsetstr(lrset, i)
             print

@@ -10,6 +10,8 @@ from itertools import chain
 
 
 def token_line_col(text, tok):
+    """Converts the token offset into (line, column) position.
+    First character is at position (1, 1)."""
     line = text.count('\n', 0, tok[2]) + 1
     offset = text.rfind('\n', 0, tok[2])
     if offset == -1:
@@ -31,7 +33,10 @@ def tokenize_iter(text, token_re, discard_names={}, discard_values={}):
             break
         pos = m.end()
         tokname = m.lastgroup
-        tokvalue = m.group(tokname)
+        try:
+            tokvalue = m.group(tokname)
+        except IndexError, ie:
+            print "No such group", tokname
         tokpos = m.start()
         if tokname not in discard_names and tokvalue not in discard_values:
             yield tokname, tokvalue, tokpos
@@ -42,9 +47,19 @@ def tokenize_iter(text, token_re, discard_names={}, discard_values={}):
 # End of adapted code
 
 
+check_groups = re.compile('[(][?]P=(\w+)[)]')
+
+
 class Scanner(object):
 
     def __init__(self, **tokens):
+        self.re = re.compile('')
+        self.tokens = {}
+        self.discard_names = set()
+        self.discard_values = set()
+        self.add(**tokens)
+
+    def add(self, **tokens):
         """Each named keyword is a token type and its value is the
         corresponding regular expression. Returns a function that iterates
         tokens in the form (type, value) over a string.
@@ -54,18 +69,23 @@ class Scanner(object):
         values that must be discarded from the scanner output.
         """
         if 'discard_names' in tokens:
-            self.discard_names = set(tokens['discard_names'])
+            self.discard_names.update(tokens['discard_names'])
             del tokens['discard_names']
-        else:
-            self.discard_names = []
         if 'discard_values' in tokens:
-            self.discard_values = set(tokens['discard_values'])
+            self.discard_values.update(tokens['discard_values'])
             del tokens['discard_values']
-        else:
-            self.discard_values = []
-        self.re = re.compile('|'.join('(?P<%s>%s)' % (k, v)
-                             for k, v in tokens.iteritems()), re.VERBOSE)
-        self.tokens = tokens
+        # Check there is no undefined group in an assertion
+        for k, v in tokens.iteritems():
+            bad_groups = filter(lambda g: g not in tokens,
+                                check_groups.findall(v))
+            if bad_groups:
+                print "Unknown groups", bad_groups
+        pattern_gen = ('(?P<%s>%s)' % (k, v) for k, v in tokens.iteritems())
+        if self.re.pattern:
+            pattern_gen = chain((self.re.pattern,), pattern_gen)
+        self.re = re.compile('|'.join(pattern_gen), re.VERBOSE)
+        self.tokens.update(tokens)
+        return self
 
     def __call__(self, text):
         "Iteratively scans through text and yield each token"

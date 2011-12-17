@@ -10,8 +10,12 @@ INITIAL_TOKEN = ('#', '#', 0)
 
 
 class Automaton(parser):
+    """A GLR parser."""
 
     def __init__(self, start_sym, grammar, scanner):
+        """Construct a GLR automaton given an LR grammar and a start symbol.
+        The scanner that creates the automaton input is also provided for
+        convenience of use."""
         parser.__init__(self, start_sym, grammar, scanner.tokens.keys())
         self.scanner = scanner
 
@@ -37,7 +41,10 @@ class Automaton(parser):
                                         if len(self.ACTION[st.data][kw]) > 0)
         return False
 
-    def recognize(self, token_stream):
+    def __recognize(self, token_stream):
+        """Runs the automaton over an input stream of tokens. For use with the
+        output of a Scanner instance. The last token MUST be
+        ('$', '$', length_of_text)."""
         S = stack(self)
         #toki = iter(token_stream)
         S.shift(None, None, 0)
@@ -77,6 +84,8 @@ class Automaton(parser):
         return None
 
     def __call__(self, text):
+        """Parse this text and return a list of valid ASTs, if any. On error,
+        returns None."""
         self.text = text  # for the sake of the error detection/recovery
-        return self.recognize(chain(self.scanner(text),
-                                    [('$', '$', len(self.text))]))
+        return self.__recognize(chain(self.scanner(text),
+                                      [('$', '$', len(self.text))]))

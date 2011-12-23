@@ -66,8 +66,10 @@ class stack(object):
         #print "---------------------------------"
         #print 'R'+'\nR'.join(map(str, pathes))
         #print "================================="
+        tokenlists = set()
         for path in pathes:
-            tokens = [e for el in path[1::2] for e in el]
+            tokenlists.add(tuple(e for el in path[1::2] for e in el))
+        for tokens in tokenlists:
             if commit:
                 ast = (tuple(chain([name], tokens)),)
                 ok = self.A.validate_ast(ast[0])

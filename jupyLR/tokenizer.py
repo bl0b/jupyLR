@@ -17,7 +17,7 @@ def token_line_col(text, tok):
     if offset == -1:
         column = tok[2] + 1
     else:
-        column = offset + 1
+        column = tok[2] - offset
     return line, column
 
 

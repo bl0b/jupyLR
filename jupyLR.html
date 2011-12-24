@@ -125,7 +125,9 @@ Data descriptors inherited from <a href="jupyLR.parser.html#parser">jupyLR.parse
 <td width="100%">Methods defined here:<br>
 <dl><dt><a name="Scanner-__call__"><strong>__call__</strong></a>(self, text)</dt><dd><tt>Iteratively&nbsp;scans&nbsp;through&nbsp;text&nbsp;and&nbsp;yield&nbsp;each&nbsp;token</tt></dd></dl>
 
-<dl><dt><a name="Scanner-__init__"><strong>__init__</strong></a>(self, **tokens)</dt><dd><tt>Each&nbsp;named&nbsp;keyword&nbsp;is&nbsp;a&nbsp;token&nbsp;type&nbsp;and&nbsp;its&nbsp;value&nbsp;is&nbsp;the<br>
+<dl><dt><a name="Scanner-__init__"><strong>__init__</strong></a>(self, **tokens)</dt></dl>
+
+<dl><dt><a name="Scanner-add"><strong>add</strong></a>(self, **tokens)</dt><dd><tt>Each&nbsp;named&nbsp;keyword&nbsp;is&nbsp;a&nbsp;token&nbsp;type&nbsp;and&nbsp;its&nbsp;value&nbsp;is&nbsp;the<br>
 corresponding&nbsp;regular&nbsp;expression.&nbsp;Returns&nbsp;a&nbsp;function&nbsp;that&nbsp;iterates<br>
 tokens&nbsp;in&nbsp;the&nbsp;form&nbsp;(type,&nbsp;value)&nbsp;over&nbsp;a&nbsp;string.<br>
 &nbsp;<br>
@@ -149,6 +151,7 @@ Data descriptors defined here:<br>
     
 <tr><td bgcolor="#eeaa77"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
 <td width="100%"><dl><dt><a name="-make_scanner"><strong>make_scanner</strong></a>(**tokens)</dt></dl>
+ <dl><dt><a name="-pp_ast"><strong>pp_ast</strong></a>(ast, indent<font color="#909090">=''</font>, is_last<font color="#909090">=True</font>)</dt><dd><tt>Pretty-print&nbsp;an&nbsp;AST&nbsp;node&nbsp;created&nbsp;by&nbsp;the&nbsp;<a href="jupyLR.parser.html#parser">parser</a>.</tt></dd></dl>
 </td></tr></table><p>
 <table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
 <tr bgcolor="#55aa55">
@@ -156,5 +159,5 @@ Data descriptors defined here:<br>
 <font color="#ffffff" face="helvetica, arial"><big><strong>Data</strong></big></font></td></tr>
     
 <tr><td bgcolor="#55aa55"><tt>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</tt></td><td>&nbsp;</td>
-<td width="100%"><strong>__all__</strong> = ['Automaton', 'Scanner', 'make_scanner']</td></tr></table>
+<td width="100%"><strong>__all__</strong> = ['pp_ast', 'Automaton', 'Scanner', 'make_scanner']</td></tr></table>
 </body></html>

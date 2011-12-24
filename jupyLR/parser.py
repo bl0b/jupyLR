@@ -109,7 +109,7 @@ class parser(object):
 
     def kernel(self, s):
         "Compute the kernel of an item set."
-        return kernel(s, self.R)
+        return kernel(s)
 
     def index(self, s):
         """Returns the index of (the closure of) item set s in the LR(0) sets

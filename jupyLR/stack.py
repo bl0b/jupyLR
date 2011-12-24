@@ -100,6 +100,8 @@ class stack(object):
                 merged_s[state] = node
         self.active = merged_s.values()
         self.count_active = len(self.active)
+
+    def dump(self):
         print "GSS HAS", self.count_active, "ACTIVE STATES"
         for a in self.active:
             print self.A.itemsetstr(self.A.kernel(self.A.LR0[a.data]), a.data)

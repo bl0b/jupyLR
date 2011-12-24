@@ -18,6 +18,7 @@ class Automaton(parser):
         convenience of use."""
         parser.__init__(self, start_sym, grammar, scanner.tokens.keys())
         self.scanner = scanner
+        self.debug = False
 
     def validate_ast(self, ast):
         """Overload this method in subclasses to discriminate semantically
@@ -60,6 +61,9 @@ class Automaton(parser):
         S.count_active = 1
         prev_tok = INITIAL_TOKEN
         for cur_tok in token_stream:
+            if self.debug:
+                print "On token", cur_tok
+                S.dump()
             if len(S.active) == 0:
                 if not self.error_detected(prev_tok, S.previously_active):
                     break

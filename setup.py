@@ -3,7 +3,7 @@
 from distutils.core import setup
 
 setup(name='jupyLR',
-      version='0.1',
+      version='0.2',
       description='GLR parsing for python with on-line ' +
                   'AST validation and basic error reporting.',
       author='Damien "bl0b" Leroux',

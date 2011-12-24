@@ -1,4 +1,22 @@
-__all__ = ['Automaton', 'Scanner', 'make_scanner']
+__all__ = ['pp_ast', 'Automaton', 'Scanner', 'make_scanner']
 
 from automaton import Automaton
 from tokenizer import Scanner, make_scanner
+
+
+def pp_ast(ast, indent='', is_last=True):
+    """Pretty-print an AST node created by the parser."""
+    if is_last:
+        prefix = '`- '
+        follow = '   '
+    else:
+        prefix = '+- '
+        follow = '|  '
+    if type(ast[1]) == tuple:
+        print ''.join((indent, prefix, ast[0]))
+        subi = indent + follow
+        for x in ast[1:-1]:
+            pp_ast(x, subi, False)
+        pp_ast(ast[-1], subi, True)
+    else:
+        print ''.join((indent, prefix, str(ast)))

@@ -31,14 +31,23 @@ class Automaton(parser):
         """
         line, column = token_line_col(self.text, cur_tok)
         print "Error detected at line %i, column %i:" % (line, column)
+        lines = self.text.splitlines()
+        print lines[line - 1]
+        print '%s^' % (' ' * (column - 1))
         #for st in last_states:
         #    print self.itemsetstr(kernel(self.LR0[st.data]))
         #    print "Expected", ', '.join(kw
         #                                for kw in self.kw_set
         #                                if len(self.ACTION[st.data][kw]) > 0)
-        print "Expected", ', '.join(kw for st in last_states
-                                       for kw in self.kw_set
-                                        if len(self.ACTION[st.data][kw]) > 0)
+        A = self.ACTION
+        print "Expected tokens", ', '.join(set(kw for st in last_states
+                                                  for kw in self.kw_set
+                                                   if len(A[st.data][kw]) > 0
+                                                      and kw not in self.R))
+        print "Expected rules", ', '.join(set(kw for st in last_states
+                                                 for kw in self.kw_set
+                                                  if len(A[st.data][kw]) > 0
+                                                     and kw in self.R))
         return False
 
     def __recognize(self, token_stream):
@@ -57,23 +66,15 @@ class Automaton(parser):
                 else:
                     continue
             prev_tok = cur_tok
+            #print "pre reduce", S.active
             # Reduce phase
             for i, node in S.enumerate_active():  # S.active may grow
                 state = node.data
                 for r, rule in ifilter(lambda x: x[0] == 'R',
                                        self.ACTION[state][cur_tok[0]]):
+                    #print "R", i, len(S.active), node
                     S.reduce(node, rule)
                 i += 1
-            # Shift phase
-            todo = []
-            for node in S.active:  # S.active MUST NOT grow
-                state = node.data
-                for r, state in ifilter(lambda x: x[0] == 'S',
-                                       self.ACTION[state][cur_tok[0]]):
-                    todo.append((node, cur_tok, state))
-            reduce(lambda a, b: S.shift(b[0], (b[1],), b[2]), todo, None)
-            # Merge states
-            S.merge()
             # Check if there are accepting states, and return their outputs
             if cur_tok[0] == '$':
                 acc = S.accepts()
@@ -81,6 +82,17 @@ class Automaton(parser):
                     return acc
                 else:
                     self.error_detected(cur_tok, S.active)
+            #print "pre shift", S.active
+            # Shift phase
+            S.count_active = len(S.active)
+            for node in (S.active[i] for i in xrange(len(S.active))):
+                state = node.data
+                for r, state in ifilter(lambda x: x[0] == 'S',
+                                       self.ACTION[state][cur_tok[0]]):
+                    S.shift(node, (cur_tok,), state)
+            #print "pre merge", S.active
+            # Merge states
+            S.merge()
         return None
 
     def __call__(self, text):

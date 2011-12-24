@@ -18,6 +18,12 @@ class stack_item(object):
 
     __repr__ = __str__
 
+    #def __hash__(self):
+    #    return hash(self.data)
+
+    #def __eq__(self, x):
+    #    return self.data.__eq__(x.data)
+
 
 class stack(object):
     def __init__(self, A):
@@ -34,8 +40,8 @@ class stack(object):
 
     def shift(self, source, token, state):
         #printlist(self.rec_all_pathes(source), "before shift: ")
-        sit = stack_item([source], token)
-        sis = stack_item([sit], state)
+        sit = stack_item(set([source]), token)
+        sis = stack_item(set([sit]), state)
         self.active.append(sis)
         #printlist(self.rec_all_pathes(sis), "after shift: ")
         #print "shift", source, token, state, self.active
@@ -43,13 +49,12 @@ class stack(object):
     def rec_path(self, node, n):
         #print "rec_path(%s, %s)" % (str(node), str(n))
         if n == 0:
-            return [[node]]
+            return set(((node,),))
         if not node.prev:
             return None
-        ret = [path.append(node.data) or path
-               for prev in node.prev
-               for path in self.rec_path(prev, n - 1)
-               if path is not None]
+        prec_pathes = set(path for prev in node.prev
+                               for path in self.rec_path(prev, n - 1))
+        ret = set(path + (node.data,) for path in prec_pathes)
         return ret
 
     def rec_all_pathes(self, node):
@@ -63,13 +68,16 @@ class stack(object):
     def reduce(self, node, ruleidx):
         name, elems, commit = self.A.R[ruleidx]
         pathes = self.rec_path(node, len(elems) * 2)
-        #print "---------------------------------"
-        #print 'R'+'\nR'.join(map(str, pathes))
+        #print "found", len(pathes), "pathes", pathes
         #print "================================="
-        tokenlists = set()
+        #print 'R' + '\nR'.join(map(str, pathes))
+        #print "---------------------------------"
+        #tokenlists = set()
+        #for path in pathes:
+        #    tokenlists.add(tuple(e for el in path[1::2] for e in el))
+        #for tokens in tokenlists:
         for path in pathes:
-            tokenlists.add(tuple(e for el in path[1::2] for e in el))
-        for tokens in tokenlists:
+            tokens = tuple(e for el in path[1::2] for e in el)
             if commit:
                 ast = (tuple(chain([name], tokens)),)
                 ok = self.A.validate_ast(ast[0])
@@ -87,11 +95,14 @@ class stack(object):
         for node in self.active[self.count_active:]:
             state = node.data
             if state in merged_s:
-                merged_s[state].prev.extend(node.prev)
+                merged_s[state].prev.update(node.prev)
             else:
                 merged_s[state] = node
         self.active = merged_s.values()
         self.count_active = len(self.active)
+        print "GSS HAS", self.count_active, "ACTIVE STATES"
+        for a in self.active:
+            print self.A.itemsetstr(self.A.kernel(self.A.LR0[a.data]), a.data)
 
     def accepts(self):
         AC = self.A.ACTION
@@ -99,10 +110,12 @@ class stack(object):
                                      and AC[state]['$'][0][0] == 'A'
         # Ast's are always encapsulated inside a 1-uple. We don't want that
         # in the output. Hence the [0].
-        return [path[-2][0] for node in self.active
-                             if is_accepting(node.data)
-                            for path in self.rec_all_pathes(node)
-                             if len(path) == 4]
-                            # length 4 being
-                            # (None, initial_state, AST, accepting_state)
-                            # we want the AST, hence the [-2].
+        ret = [path[-2][0] for node in self.active
+                            if is_accepting(node.data)
+                           for path in self.rec_all_pathes(node)
+                            if len(path) == 4]
+                           # length 4 being
+                           # (None, initial_state, AST, accepting_state)
+                           # we want the AST, hence the [-2].
+        #print "GSS ACCEPTING", len(ret), "OUT OF", self.count_active, "STATES"
+        return ret

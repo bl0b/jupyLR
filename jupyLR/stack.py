@@ -79,15 +79,16 @@ class stack(object):
         for path in pathes:
             tokens = tuple(e for el in path[1::2] for e in el)
             if commit:
-                ast = (tuple(chain([name], tokens)),)
-                ok = self.A.validate_ast(ast[0])
+                ast = tuple(chain([name], tokens))
+                ok = self.A.validate_ast(ast)
+                if ok is not None:
+                    ok = (ok,)
             else:
                 ast = tokens
-                ok = True
-            if ok:
+                ok = ast
+            if ok is not None:
                 goto = self.A.ACTION[path[0].data][name]
-                #print goto
-                self.shift(path[0], ast, goto[0][1])
+                self.shift(path[0], ok, goto[0][1])
 
     def merge(self):
         merged_s = {}

@@ -23,8 +23,10 @@ class Automaton(parser):
     def validate_ast(self, ast):
         """Overload this method in subclasses to discriminate semantically
         invalid ASTs on the fly.
+        Return None for an invalid AST, or whatever you want to end up in the
+        resulting AST.
         """
-        return True
+        return ast
 
     def error_detected(self, cur_tok, last_states):
         """Overload this method in subclasses to implement error recovery

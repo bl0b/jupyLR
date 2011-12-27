@@ -213,6 +213,9 @@ class parser(object):
             print self.itemsetstr(lrset, i)
             print
 
+    def itemset(self, i):
+        return self.itemsetstr(self.LR0[i], i)
+
     @property
     def unused_rules(self):
         check = lambda i: reduce(lambda a, b: a and i not in b, self.LR0, True)

@@ -216,5 +216,5 @@ class parser(object):
     @property
     def unused_rules(self):
         unused = lambda i: reduce(lambda a, b: a and i not in b, a.LR0, True)
-        unused_rule_indices = set(x[0] for x in filter(check, a.I))
+        unused_rule_indices = set(x[0] for x in filter(unused, a.I))
         return set(a.R[x][0] for x in unused_rule_indices)

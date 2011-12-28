@@ -1,8 +1,159 @@
 <html>
     <head>
         <title>jupyLR, GLR parsing in python</title>
+        <style>
+            div {
+                border-width: 1px;
+                border-color: black;
+            }
+            pre {
+                background-color: #E0E0E0;
+                margin-left: 50px;
+                margin-right: 100px;
+                padding: 10px;
+            }
+        </style>
     </head>
     <body>
-        <a href="jupyLR.html">pydoc</a>
+        <H1>jupyLR</H1>
+
+        An old-school parsing framework that implements the time-honoured scanner+parser stack.
+
+        Lexical analysis is performed with regular expressions (as described in http://stackoverflow.com/a/2359619).
+        Parsing is done with the GLR algorithm based on an SLR automaton.
+
+        Access the Pydoc <a href="jupyLR.html">there</a>.
+
+        <H2>Synopsis</H2>
+        <div><pre>from jupyLR import Scanner, Automaton
+
+my_scanner = Scanner(zero='0', one='1', star='[*]', plus='[+]')
+
+grammar = """
+E = E plus B
+E = E star B
+E = B
+B = zero
+B = one
+"""
+
+a = Automaton('E', grammar, my_scanner)
+
+a('1+1')</pre></div>
+        <H3>Scanner</H3>
+
+        <p>The scanner converts a text into a stream of tokens. A token is a pair (token_type, token_value).
+        jupyLR provides a convenient way to define a scanner with the Scanner class. As the __init__ docstring states:
+
+        <p>Each named keyword is a token type and its value is the corresponding
+        regular expression. Returns a function that iterates tokens in the form
+        (type, value) over a string.
+
+        <p>Special keywords are discard_names and discard_values, which specify lists
+        containing tokens names or values that must be discarded from the scanner
+        output.
+
+        <p>As an undocumented feature, the scanner holds the list of token types in
+        its attribute 'tokens'.
+
+        <H3>Grammar</H3>
+
+        <p>The grammar you can provide to configure a parser is extremely simple: one symbol followed by the equal "=" sign
+        defines a rule name, and all other words after the equal sign are the production of this rule, until the next rule name
+        (that is, everything until the word before the next equal sign or the end).
+
+        <p>One can use a pipe "|" to delimit alternative productions, instead of reentering the rule name followed by the equal sign.
+
+        <p>A minus sign in front of a rule name tells the parser to not produce an AST node for this production (see below).
+
+        <H3>Parser</H3>
+
+        <p>The parsing algorithm is Generalized LR (GLR). The LR(0) sets and SLR action/goto tables are computed on the fly when the Automaton instance
+        is created. Support for serialization is planned very soon to avoid recomputing the automaton for big grammars.
+        For the user's convenience, the parser is callable, taking a string and outputting the stream of productions which can be used
+        to build an AST.
+
+        <H3>AST and progressive disambiguation and transformation</H3>
+
+        <p>As the GLR progresses in the parsing, it maintains up-to-date AST and validates each new AST node before continuing.
+
+        <p>By default each rule produces an AST node in the form (rule_name, contents...). A dash ("-") can be prepended to a rule
+        name in the grammar to make this rule transient in the AST.
+
+        <p>For instance :
+        <pre>E = E plus B
+E = B
+B = 1</pre>
+        <p>with the text "1+1" will produce (E (E (B (one, 1))) (plus, +) (E (B (one, 1)))).
+
+        <p>The variant :
+
+        <pre>E = E plus B
+-E = B
+B = 1</pre>
+        <p>with the same text will produce (E (B (one, 1)) (plus, +) (B (one, 1))).
+
+        <p>You can subclass Automaton and overload <code>validate_ast</code> to perform disambiguation or just transform the AST.
+
+        <p>For instance, consider the following code that produces a simple arithmetic calculator :
+
+        <pre>from jupyLR import Automaton, Scanner
+import operator
+
+class A(Automaton):
+    def validate_ast(self, ast):
+        # Demonstrate what we are currently doing
+        print "evaluating", ast, "...",
+        if ast[0] == 'D':
+            # on a digit, evaluate to int
+            ret = int(ast[1][1])
+        elif ast[0] == 'E':
+            # All done, evaluate to computed result
+            ret = ast[1]
+        else:
+            # Perform an operation using the operator module
+            op = getattr(operator, ast[0])
+            ret = op(ast[1], ast[3])
+        print ret
+        return ret
+
+grammar = """
+    E = e1
+    -e1 = e0|add|sub
+    -e0 = D|mul|div
+    add = e1 plus e0
+    sub = e1 minus e0
+    mul = e0 star D
+    div = e0 slash D
+    D=d
+"""
+a=A('E', grammar, Scanner(d='[0-9]', plus='[+]', minus='[-]', slash='/', star='[*]'))</pre>   
+        <p>With this, the call <code>a('1+2*3+5-8')</code> will produce the following output :
+        <pre>evaluating ('D', ('d', '1', 0)) ... 1
+evaluating ('D', ('d', '2', 2)) ... 2
+evaluating ('D', ('d', '3', 4)) ... 3
+evaluating ('mul', 2, ('star', '*', 3), 3) ... 6
+evaluating ('add', 1, ('plus', '+', 1), 6) ... 7
+evaluating ('D', ('d', '5', 6)) ... 5
+evaluating ('add', 7, ('plus', '+', 5), 5) ... 12
+evaluating ('D', ('d', '8', 8)) ... 8
+evaluating ('sub', 12, ('minus', '-', 7), 8) ... 4
+evaluating ('E', 4) ... 4</pre>
+        <p>And return <code>[4]</code>.
+
+        <H2>How to use jupyLR</H2>
+
+        <H3>Git</H3>
+
+        <pre>git clone git://github.com/bl0b/jupyLR.git</pre>
+
+        <H2>TODO</H2>
+
+        <ul>
+            <li> fill in "How to use jupyLR" section in this readme
+            <li> draw the automaton using pydot or something
+            <li> ...
+            <li> PROFIT!
+        </ul>
     </body>
 </html>

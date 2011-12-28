@@ -1,0 +1,84 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head><title>Python: class Automaton</title>
+</head><body bgcolor="#f0f0f8">
+<p>
+<table width="100%" cellspacing=0 cellpadding=2 border=0 summary="section">
+<tr bgcolor="#ffc8d8">
+<td colspan=3 valign=bottom>&nbsp;<br>
+<font color="#000000" face="helvetica, arial"><strong>jupyLR.Automaton</strong> = <a name="jupyLR.Automaton">class Automaton</a>(<a href="jupyLR.parser.html#parser">jupyLR.parser.parser</a>)</font></td></tr>
+    
+<tr bgcolor="#ffc8d8"><td rowspan=2><tt>&nbsp;&nbsp;&nbsp;</tt></td>
+<td colspan=2><tt>A&nbsp;GLR&nbsp;parser.<br>&nbsp;</tt></td></tr>
+<tr><td>&nbsp;</td>
+<td width="100%"><dl><dt>Method resolution order:</dt>
+<dd><a href="jupyLR.automaton.html#Automaton">Automaton</a></dd>
+<dd><a href="jupyLR.parser.html#parser">jupyLR.parser.parser</a></dd>
+<dd><a href="__builtin__.html#object">__builtin__.object</a></dd>
+</dl>
+<hr>
+Methods defined here:<br>
+<dl><dt><a name="Automaton-__call__"><strong>__call__</strong></a>(self, text)</dt><dd><tt>Parse&nbsp;this&nbsp;text&nbsp;and&nbsp;return&nbsp;a&nbsp;list&nbsp;of&nbsp;valid&nbsp;ASTs,&nbsp;if&nbsp;any.&nbsp;On&nbsp;error,<br>
+returns&nbsp;None.</tt></dd></dl>
+
+<dl><dt><a name="Automaton-__init__"><strong>__init__</strong></a>(self, start_sym, grammar, scanner)</dt><dd><tt>Construct&nbsp;a&nbsp;GLR&nbsp;automaton&nbsp;given&nbsp;an&nbsp;LR&nbsp;grammar&nbsp;and&nbsp;a&nbsp;start&nbsp;symbol.<br>
+The&nbsp;scanner&nbsp;that&nbsp;creates&nbsp;the&nbsp;automaton&nbsp;input&nbsp;is&nbsp;also&nbsp;provided&nbsp;for<br>
+convenience&nbsp;of&nbsp;use.</tt></dd></dl>
+
+<dl><dt><a name="Automaton-error_detected"><strong>error_detected</strong></a>(self, cur_tok, last_states)</dt><dd><tt>Overload&nbsp;this&nbsp;method&nbsp;in&nbsp;subclasses&nbsp;to&nbsp;implement&nbsp;error&nbsp;recovery<br>
+or&nbsp;notification.</tt></dd></dl>
+
+<dl><dt><a name="Automaton-validate_ast"><strong>validate_ast</strong></a>(self, ast)</dt><dd><tt>Overload&nbsp;this&nbsp;method&nbsp;in&nbsp;subclasses&nbsp;to&nbsp;discriminate&nbsp;semantically<br>
+invalid&nbsp;ASTs&nbsp;on&nbsp;the&nbsp;fly.<br>
+Return&nbsp;None&nbsp;for&nbsp;an&nbsp;invalid&nbsp;AST,&nbsp;or&nbsp;whatever&nbsp;you&nbsp;want&nbsp;to&nbsp;end&nbsp;up&nbsp;in&nbsp;the<br>
+resulting&nbsp;AST.</tt></dd></dl>
+
+<hr>
+Methods inherited from <a href="jupyLR.parser.html#parser">jupyLR.parser.parser</a>:<br>
+<dl><dt><a name="Automaton-__str__"><strong>__str__</strong></a>(self)</dt></dl>
+
+<dl><dt><a name="Automaton-action_to_str"><strong>action_to_str</strong></a>(self)</dt><dd><tt>Stringify&nbsp;the&nbsp;ACTION/GOTO&nbsp;table&nbsp;for&nbsp;pretty-print.</tt></dd></dl>
+
+<dl><dt><a name="Automaton-closure"><strong>closure</strong></a>(self, s)</dt><dd><tt>Compute&nbsp;the&nbsp;closure&nbsp;of&nbsp;an&nbsp;item&nbsp;set.</tt></dd></dl>
+
+<dl><dt><a name="Automaton-compute_ACTION"><strong>compute_ACTION</strong></a>(self)</dt><dd><tt>Compute&nbsp;the&nbsp;ACTION/GOTO&nbsp;table.</tt></dd></dl>
+
+<dl><dt><a name="Automaton-compute_GOTO"><strong>compute_GOTO</strong></a>(self)</dt><dd><tt>Compute&nbsp;the&nbsp;GOTO&nbsp;table.</tt></dd></dl>
+
+<dl><dt><a name="Automaton-compute_lr0"><strong>compute_lr0</strong></a>(self)</dt><dd><tt>Compute&nbsp;the&nbsp;LR(0)&nbsp;sets.</tt></dd></dl>
+
+<dl><dt><a name="Automaton-conflicts"><strong>conflicts</strong></a>(self)</dt><dd><tt>Returns&nbsp;the&nbsp;list&nbsp;of&nbsp;conflicts&nbsp;in&nbsp;the&nbsp;ACTION&nbsp;table.</tt></dd></dl>
+
+<dl><dt><a name="Automaton-count_conflicts"><strong>count_conflicts</strong></a>(self)</dt><dd><tt>Returns&nbsp;the&nbsp;count&nbsp;of&nbsp;conflicts&nbsp;in&nbsp;the&nbsp;ACTION&nbsp;table.</tt></dd></dl>
+
+<dl><dt><a name="Automaton-dump_sets"><strong>dump_sets</strong></a>(self)</dt><dd><tt>Pretty-print&nbsp;all&nbsp;LR(0)&nbsp;item&nbsp;sets.</tt></dd></dl>
+
+<dl><dt><a name="Automaton-following_tokens"><strong>following_tokens</strong></a>(self, item)</dt><dd><tt>Returns&nbsp;all&nbsp;tokens&nbsp;following&nbsp;the&nbsp;current&nbsp;item.</tt></dd></dl>
+
+<dl><dt><a name="Automaton-index"><strong>index</strong></a>(self, s)</dt><dd><tt>Returns&nbsp;the&nbsp;index&nbsp;of&nbsp;(the&nbsp;closure&nbsp;of)&nbsp;item&nbsp;set&nbsp;s&nbsp;in&nbsp;the&nbsp;LR(0)&nbsp;sets<br>
+list.</tt></dd></dl>
+
+<dl><dt><a name="Automaton-init_row"><strong>init_row</strong></a>(self, init<font color="#909090">=None</font>)</dt><dd><tt>Initialize&nbsp;a&nbsp;row&nbsp;of&nbsp;the&nbsp;ACTION&nbsp;table.</tt></dd></dl>
+
+<dl><dt><a name="Automaton-itemset"><strong>itemset</strong></a>(self, i)</dt></dl>
+
+<dl><dt><a name="Automaton-itemsetstr"><strong>itemsetstr</strong></a>(self, item, label<font color="#909090">=''</font>)</dt><dd><tt>Stringify&nbsp;an&nbsp;item&nbsp;set&nbsp;for&nbsp;pretty-print.</tt></dd></dl>
+
+<dl><dt><a name="Automaton-itemstr"><strong>itemstr</strong></a>(self, item)</dt><dd><tt>Stringify&nbsp;an&nbsp;item&nbsp;for&nbsp;pretty-print.</tt></dd></dl>
+
+<dl><dt><a name="Automaton-kernel"><strong>kernel</strong></a>(self, s)</dt><dd><tt>Compute&nbsp;the&nbsp;kernel&nbsp;of&nbsp;an&nbsp;item&nbsp;set.</tt></dd></dl>
+
+<dl><dt><a name="Automaton-next_items"><strong>next_items</strong></a>(self, item, visited<font color="#909090">=None</font>)</dt><dd><tt>Compute&nbsp;the&nbsp;yet&nbsp;unvisited&nbsp;items&nbsp;following&nbsp;the&nbsp;given&nbsp;item.</tt></dd></dl>
+
+<hr>
+Data descriptors inherited from <a href="jupyLR.parser.html#parser">jupyLR.parser.parser</a>:<br>
+<dl><dt><strong>__dict__</strong></dt>
+<dd><tt>dictionary&nbsp;for&nbsp;instance&nbsp;variables&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>__weakref__</strong></dt>
+<dd><tt>list&nbsp;of&nbsp;weak&nbsp;references&nbsp;to&nbsp;the&nbsp;object&nbsp;(if&nbsp;defined)</tt></dd>
+</dl>
+<dl><dt><strong>unused_rules</strong></dt>
+</dl>
+</td></tr></table>
+</body></html>

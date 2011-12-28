@@ -50,11 +50,11 @@ class RuleSet(dict):
                 self.add(rulename, elems, commit)
             else:
                 epsilons.add(rulename)
-        print 'found epsilon rules', epsilons
+        #print 'found epsilon rules', epsilons
         return epsilons
 
     def add_epsilon_free(self, eps, epsilons):
-        print "Adding", eps, "-free variants"
+        #print "Adding", eps, "-free variants"
         i = 0
         while i < self.rules_count:
             if self[i] is None:
@@ -62,7 +62,7 @@ class RuleSet(dict):
                 continue
             rulename, elems, commit = self[i]
             if eps in elems:
-                print "... to", rulename, elems
+                #print "... to", rulename, elems
                 E = set([elems])
                 old = 0
                 while len(E) != old:
@@ -71,10 +71,10 @@ class RuleSet(dict):
                                 for elems in E
                                 for i in xrange(len(elems))
                                  if elems[i] == eps)
-                print "Created variants", E
+                #print "Created variants", E
                 for elems in E:
                     if len(elems) == 0:
-                        print "got new epsilon rule", rulename
+                        #print "got new epsilon rule", rulename
                         epsilons.add(rulename)
                     else:
                         self.add(rulename, elems, commit)
@@ -101,7 +101,7 @@ class RuleSet(dict):
                         del self[rulename]
                     must_cleanup = True
                     epsilons.add(rulename)
-                    print "epsilon removal created new epsilon rule", rulename
+                    #print "epsilon removal created new epsilon rule", rulename
                 else:
                     self[i] = (rulename, elems, commit)
                 #
@@ -123,7 +123,10 @@ class RuleSet(dict):
                                     if self[i] is not None)
             epsilons = self.fill(rules)
             if epsilons:
-                print "D'oh ! I left epsilon rules in there !", epsilons
+                #print "D'oh ! I left epsilon rules in there !", epsilons
+                raise Exception("There is a bug ! There is a bug ! " +
+                                "Failed to refactor this grammar into " +
+                                "an epsilon-free one !")
 
     def add(self, rulename, elems, commit):
         if rulename not in self:

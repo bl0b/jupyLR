@@ -34,17 +34,106 @@ def rules(start, grammar, kw):
     yield (edit_rule, tuple(words), edit_rule_commit)
 
 
-def ruleset(rules):
-    ret = {}
-    counter = 0
-    for rulename, elems, commit in rules:
-        if rulename not in ret:
-            ret[rulename] = []
+class RuleSet(dict):
+
+    def __init__(self, rules):
+        dict.__init__(self)
+        self.init(rules)
+
+    def fill(self, rules):
+        self.names_count = 0
+        self.rules_count = 0
+        self.clear()
+        epsilons = set()
+        for rulename, elems, commit in rules:
+            if len(elems) > 0:
+                self.add(rulename, elems, commit)
+            else:
+                epsilons.add(rulename)
+        print 'found epsilon rules', epsilons
+        return epsilons
+
+    def add_epsilon_free(self, eps, epsilons):
+        print "Adding", eps, "-free variants"
+        i = 0
+        while i < self.rules_count:
+            if self[i] is None:
+                i += 1
+                continue
+            rulename, elems, commit = self[i]
+            if eps in elems:
+                print "... to", rulename, elems
+                E = set([elems])
+                old = 0
+                while len(E) != old:
+                    old = len(E)
+                    E = E.union(elems[:i] + elems[i + 1:]
+                                for elems in E
+                                for i in xrange(len(elems))
+                                 if elems[i] == eps)
+                print "Created variants", E
+                for elems in E:
+                    if len(elems) == 0:
+                        print "got new epsilon rule", rulename
+                        epsilons.add(rulename)
+                    else:
+                        self.add(rulename, elems, commit)
+                    #
+                #
+            i += 1
+        #
+
+    def remove_epsilon(self, eps, epsilons):
+        must_cleanup = False
+        i = 0
+        while i < self.rules_count:
+            if self[i] is None:
+                i += 1
+                continue
+            rulename, elems, commit = self[i]
+            if eps in elems:
+                elems = tuple(e for e in elems if e != eps)
+                if len(elems) == 0:
+                    # yet another epsilon :/
+                    self[i] = None
+                    self[rulename].remove(i)
+                    if not self[rulename]:
+                        del self[rulename]
+                    must_cleanup = True
+                    epsilons.add(rulename)
+                    print "epsilon removal created new epsilon rule", rulename
+                else:
+                    self[i] = (rulename, elems, commit)
+                #
+            i += 1
+        return must_cleanup
+
+    def init(self, rules):
+        epsilons = self.fill(rules)
+        must_cleanup = False
+        while epsilons:
+            eps = epsilons.pop()
+            if eps in self:
+                # Rule produces something and has an epsilon alternative
+                self.add_epsilon_free(eps, epsilons)
+            else:
+                must_cleanup |= self.remove_epsilon(eps, epsilons)
+        if must_cleanup:
+            rules = sorted(self[i] for i in xrange(self.rules_count)
+                                    if self[i] is not None)
+            epsilons = self.fill(rules)
+            if epsilons:
+                print "D'oh ! I left epsilon rules in there !", epsilons
+
+    def add(self, rulename, elems, commit):
+        if rulename not in self:
+            self.names_count += 1
+            self[rulename] = set()
         rule = (rulename, elems, commit)
-        ret[rulename].append(counter)
-        ret[counter] = rule
-        counter += 1
-    return ret, counter
+        if rule not in (self[i] for i in self[rulename]):
+            self[rulename].add(self.rules_count)
+            self[self.rules_count] = rule
+            self.rules_count += 1
 
 
 class parser(object):
@@ -52,10 +141,11 @@ class parser(object):
     def __init__(self, start_sym, grammar, scanner_kw=[]):
         self.kw_set = set(scanner_kw)
         self.kw_set.add('$')
-        self.R, counter = ruleset(rules(start_sym, grammar, self.kw_set))
-        self.I = set((r, i) for r in xrange(counter)
+        #self.R, counter = ruleset(rules(start_sym, grammar, self.kw_set))
+        self.R = RuleSet(rules(start_sym, grammar, self.kw_set))
+        self.I = set((r, i) for r in xrange(self.R.rules_count)
                             for i in xrange(len(self.R[r][1]) + 1))
-        self.rules_count = counter
+        #self.rules_count = self.R.rules_count
         self.compute_lr0()
         self.LR0 = list(sorted(self.LR0))
         self.LR0_idx = {}
@@ -66,7 +156,7 @@ class parser(object):
 
     def __str__(self):
         return '\n'.join(self.R[r][0] + ' = ' + ' '.join(self.R[r][1])
-                         for r in xrange(self.rules_count))
+                         for r in xrange(self.R.rules_count))
 
     def conflicts(self):
         "Returns the list of conflicts in the ACTION table."

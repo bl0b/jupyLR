@@ -35,7 +35,7 @@ class Automaton(parser):
         line, column = token_line_col(self.text, cur_tok)
         print "Error detected at line %i, column %i:" % (line, column)
         lines = self.text.splitlines()
-        print lines[line - 1]
+        print lines and lines[line - 1] or self.text
         print '%s^' % (' ' * (column - 1))
         #for st in last_states:
         #    print self.itemsetstr(kernel(self.LR0[st.data]))
@@ -43,14 +43,18 @@ class Automaton(parser):
         #                                for kw in self.kw_set
         #                                if len(self.ACTION[st.data][kw]) > 0)
         A = self.ACTION
-        print "Expected tokens", ', '.join(set(kw for st in last_states
-                                                  for kw in self.kw_set
-                                                   if len(A[st.data][kw]) > 0
-                                                      and kw not in self.R))
-        print "Expected rules", ', '.join(set(kw for st in last_states
-                                                 for kw in self.kw_set
-                                                  if len(A[st.data][kw]) > 0
-                                                     and kw in self.R))
+        toks = set(kw for st in last_states for kw in self.kw_set
+                       if len(A[st.data][kw]) > 0
+                          and kw not in self.R and kw != '$')
+        if not toks:
+            print "Expected end of text"
+        else:
+            print "Expected token%s" % (len(toks) > 1 and 's' or ''),
+            print ', '.join(toks)
+        if self.debug:
+            rules = set(kw for st in last_states for kw in self.kw_set
+                            if len(A[st.data][kw]) > 0 and kw in self.R)
+            print "Expected rules", ', '.join(rules)
         return False
 
     def __recognize(self, token_stream):

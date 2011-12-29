@@ -144,11 +144,10 @@ class parser(object):
     def __init__(self, start_sym, grammar, scanner_kw=[]):
         self.kw_set = set(scanner_kw)
         self.kw_set.add('$')
-        #self.R, counter = ruleset(rules(start_sym, grammar, self.kw_set))
         self.R = RuleSet(rules(start_sym, grammar, self.kw_set))
         self.I = set((r, i) for r in xrange(self.R.rules_count)
                             for i in xrange(len(self.R[r][1]) + 1))
-        #self.rules_count = self.R.rules_count
+        self.precompute_next_items()
         self.compute_lr0()
         self.LR0 = list(sorted(self.LR0))
         self.LR0_idx = {}
@@ -227,19 +226,29 @@ class parser(object):
             ret[kw] = [] + init
         return ret
 
+    def precompute_next_items(self):
+        self.next_list = dict((k, set()) for k in self.R if type(k) is str)
+        for item in self.I:
+            r, i = item
+            n, e, c = self.R[r]
+            if i > 0 and e[i - 1] in self.next_list:
+                self.next_list[e[i - 1]].add(item)
+
     def next_items(self, item, visited=None):
         "Compute the yet unvisited items following the given item."
         items = set()
         if visited is None:
             visited = set()
         name = self.R[item[0]][0]
-        for r, e, i, n in expand_itemset2(self.I, self.R):
-            if i > 0 and e[i - 1] == name and (r, i) not in visited:
-                visited.add((r, i))
+        for it in self.next_list[name]:
+            if it not in visited:
+                r, i = it
+                e = self.R[r][1]
+                visited.add(it)
                 if len(e) == i:
-                    items.update(self.next_items((r, i), visited))
+                    items.update(self.next_items(it, visited))
                 else:
-                    items.add((r, i))
+                    items.add(it)
         return items
 
     def following_tokens(self, item):

@@ -11,7 +11,10 @@ def expand_itemset(itemset, R):
 
 
 def expand_itemset2(itemset, R):
-    return imap(lambda x: x[:1] + expand_item(x, R), itemset)
+    for item in itemset:
+        rule = R[item[0]]
+        yield item[0], rule[1], item[1], rule[0]
+    #return imap(lambda x: x[:1] + expand_item(x, R), itemset)
 
 
 def itemstr(item, R):
@@ -59,15 +62,21 @@ def closure(itemset, R):
     "the epsilon-closure of this item set"
     C = set(itemset)
     last = -1
+    visited = set()
     while len(C) != last:
         last = len(C)
         Ctmp = set()
         for item in C:
-            elems, i, name = expand_item(item, R)
+            r, i = item
+            name, elems, commit = R[r]
+            #elems, i, name = expand_item(item, R)
             if i == len(elems):
                 continue
-            if elems[i] in R:
-                Ctmp.update((r, 0) for r in R[elems[i]])
+            if elems[i] in R and elems[i] not in visited:
+                visited.add(elems[i])
+                for r in R[elems[i]]:
+                    Ctmp.add((r, 0))
+                #Ctmp.update((r, 0) for r in R[elems[i]])
         C.update(Ctmp)
     return C
 

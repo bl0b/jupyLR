@@ -172,6 +172,13 @@ class parser(object):
                       (a for row in self.ACTION for a in row.itervalues()),
                       0)
 
+    def resolve_SR_conflicts(self, favor='S'):
+        for s, k in self.conflicts():
+            actions = self.ACTION[s][k]
+            atypes = [a[0] for a in actions]
+            if 'S' in atypes and 'R' in atypes:
+                self.ACTION[s][k] = [a for a in actions if a[0] == favor]
+
     def compute_lr0(self):
         "Compute the LR(0) sets."
         self.LR0 = set()

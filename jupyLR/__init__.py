@@ -12,7 +12,9 @@ def pp_ast(ast, indent='', is_last=True):
     else:
         prefix = '+- '
         follow = '|  '
-    if type(ast[1]) == tuple:
+    if type(ast) is not tuple:
+        print ''.join((indent, prefix, str(ast)))
+    elif len(ast) and type(ast[1]) is not str:  # be it a tuple or anything
         print ''.join((indent, prefix, ast[0]))
         subi = indent + follow
         for x in ast[1:-1]:

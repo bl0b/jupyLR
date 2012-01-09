@@ -9,6 +9,7 @@ def printlist(l, pfx):
 
 
 class stack_item(object):
+
     def __init__(self, prev, x):
         self.prev = prev
         self.data = x
@@ -26,6 +27,7 @@ class stack_item(object):
 
 
 class stack(object):
+
     def __init__(self, A):
         self.active = []
         self.A = A
@@ -82,7 +84,7 @@ class stack(object):
                 ast = tuple(chain([name], tokens))
                 ok = self.A.validate_ast(ast)
                 if ok is not None:
-                    ok = (ok,)
+                    ok = (ok != tuple()) and (ok,) or tuple()
             else:
                 ast = tokens
                 ok = ast

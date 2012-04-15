@@ -83,7 +83,7 @@ class Scanner(object):
         pattern_gen = ('(?P<%s>%s)' % (k, v) for k, v in tokens.iteritems())
         if self.re.pattern:
             pattern_gen = chain((self.re.pattern,), pattern_gen)
-        self.re = re.compile('|'.join(pattern_gen), re.VERBOSE)
+        self.re = re.compile('|'.join(pattern_gen), re.VERBOSE | re.MULTILINE)
         self.tokens.update(tokens)
         return self
 

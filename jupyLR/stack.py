@@ -5,7 +5,7 @@ from itertools import chain, ifilter
 
 
 def printlist(l, pfx):
-    print pfx + ('\n' + pfx).join(map(str, l))
+    print pfx + '\n  ' + '\n  '.join(map(str, l))
 
 
 class stack_item(object):
@@ -95,6 +95,10 @@ class stack(object):
     def merge(self):
         merged_s = {}
         self.previously_active = self.active[:self.count_active]
+        #printlist(list(p
+        #               for sis in self.active[self.count_active:]
+        #               for p in self.rec_all_pathes(sis)),
+        #          "before merge: ")
         for node in self.active[self.count_active:]:
             state = node.data
             if state in merged_s:
@@ -103,6 +107,10 @@ class stack(object):
                 merged_s[state] = node
         self.active = merged_s.values()
         self.count_active = len(self.active)
+        #printlist(list(p
+        #               for sis in self.active
+        #               for p in self.rec_all_pathes(sis)),
+        #          "after merge: ")
 
     def dump(self):
         print "GSS HAS", self.count_active, "ACTIVE STATES"

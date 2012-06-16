@@ -28,7 +28,7 @@ class Automaton(parser):
         """
         return ast
 
-    def error_detected(self, cur_tok, last_states):
+    def error_detected(self, text, cur_tok, last_states):
         """Overload this method in subclasses to implement error recovery
         or notification.
         """
@@ -57,7 +57,7 @@ class Automaton(parser):
             print "Expected rules", ', '.join(rules)
         return False
 
-    def __recognize(self, token_stream):
+    def __recognize(self, text, token_stream):
         """Runs the automaton over an input stream of tokens. For use with the
         output of a Scanner instance. The last token MUST be
         ('$', '$', length_of_text)."""
@@ -68,7 +68,8 @@ class Automaton(parser):
         prev_tok = INITIAL_TOKEN
         for cur_tok in token_stream:
             if len(S.active) == 0:
-                if not self.error_detected(prev_tok, S.previously_active):
+                if not self.error_detected(text, prev_tok,
+                                           S.previously_active):
                     break
                 else:
                     continue
@@ -88,7 +89,7 @@ class Automaton(parser):
                 if acc:
                     return acc
                 else:
-                    self.error_detected(cur_tok, S.active)
+                    self.error_detected(text, cur_tok, S.active)
             #print "pre shift", S.active
             # Shift phase
             S.count_active = len(S.active)
@@ -109,6 +110,5 @@ class Automaton(parser):
     def __call__(self, text):
         """Parse this text and return a list of valid ASTs, if any. On error,
         returns None."""
-        self.text = text  # for the sake of the error detection/recovery
-        return self.__recognize(chain(self.scanner(text),
-                                      [('$', '$', len(self.text))]))
+        return self.__recognize(text, chain(self.scanner(text),
+                                            [('$', '$', len(text))]))

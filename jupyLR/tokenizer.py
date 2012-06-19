@@ -116,9 +116,9 @@ class Scanner(object):
                 self.state_discard[state_name][d].update(discard[d])
             self.state_discard[state_name][d].update(
                     self.state_discard[None][d])
-        print "state enter:", self.state_enter
-        print "state leave:", self.state_leave
-        print "current discards:", self.state_discard
+        #print "state enter:", self.state_enter
+        #print "state leave:", self.state_leave
+        #print "current discards:", self.state_discard
         return self
 
     def must_publish_token(self, state, tokname, tokvalue):
@@ -147,11 +147,11 @@ class Scanner(object):
             tokpos = m.start()
             if (tokname in self.state_leave
                     and states[-1] == self.state_leave[tokname]):
-                print "leaving state", states[-1]
+                #print "leaving state", states[-1]
                 states.pop()
             if tokname in self.state_enter:
                 states.append(self.state_enter[tokname])
-                print "entering state", states[-1]
+                #print "entering state", states[-1]
             if self.must_publish_token(states[-1], tokname, tokvalue):
                 yield tokname, tokvalue, tokpos
         if pos != len(text):

@@ -32,10 +32,10 @@ class Automaton(parser):
         """Overload this method in subclasses to implement error recovery
         or notification.
         """
-        line, column = token_line_col(self.text, cur_tok)
+        line, column = token_line_col(text, cur_tok)
         print "Error detected at line %i, column %i:" % (line, column)
-        lines = self.text.splitlines()
-        print lines and lines[line - 1] or self.text
+        lines = text.splitlines()
+        print lines and lines[line - 1] or text
         print '%s^' % (' ' * (column - 1))
         #for st in last_states:
         #    print self.itemsetstr(kernel(self.LR0[st.data]))

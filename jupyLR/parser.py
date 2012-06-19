@@ -1,4 +1,3 @@
-from tokenizer import tokenize_iter
 import re
 from itertools import ifilter, izip, chain, imap
 from tokenizer import make_scanner

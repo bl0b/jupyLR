@@ -35,8 +35,16 @@ class Automaton(parser):
         line, column = token_line_col(text, cur_tok)
         print "Error detected at line %i, column %i:" % (line, column)
         lines = text.splitlines()
-        print lines and lines[line - 1] or text
-        print '%s^' % (' ' * (column - 1))
+        #print "text"
+        #print '\n'.join("%5i: %s" % x for x in enumerate(lines))
+        #print "line", line
+        if lines:
+            if len(lines) > (line - 1):
+                print lines[line - 1]
+                print '%s^' % (''.join(c == '\t' and '\t' or ' '
+                                       for c in lines[line -1][:column - 1]))
+            else:
+                print "at end of text"
         #for st in last_states:
         #    print self.itemsetstr(kernel(self.LR0[st.data]))
         #    print "Expected", ', '.join(kw
@@ -46,6 +54,7 @@ class Automaton(parser):
         toks = set(kw for st in last_states for kw in self.kw_set
                        if len(A[st.data][kw]) > 0
                           and kw not in self.R and kw != '$')
+        print "Got", cur_tok
         if not toks:
             print "Expected end of text"
         else:

@@ -61,9 +61,24 @@ class Scanner(object):
         self.state_leave = {}
         self.state_discard = {None: {'discard_names': set(),
                                      'discard_values': set()}}
+        self.callbacks = {}
         #self.discard_names = set()
         #self.discard_values = set()
         self.add(**tokens)
+
+    def __getstate__(self):
+        return dict(re=self.re, tokens=self.tokens,
+                    state_enter=self.state_enter,
+                    state_leave=self.state_leave,
+                    state_discard=self.state_discard,
+                    callbacks={})
+
+    def install_callback(self, tok_type, callback):
+        """Set a callback function to be invoked when a token of type tok_type
+        is scanned. The value returned by the callback determines the behaviour
+        of the scanner. If None, the token is discarded. Otherwise, a valid
+        token tuple (tok_type, text, offset) is expected."""
+        self.callbacks[tok_type] = callback
 
     def add(self, **tokens):
         """Each named keyword is a token type and its value is the
@@ -115,7 +130,7 @@ class Scanner(object):
             if d in discard:
                 self.state_discard[state_name][d].update(discard[d])
             self.state_discard[state_name][d].update(
-                    self.state_discard[None][d])
+                self.state_discard[None][d])
         #print "state enter:", self.state_enter
         #print "state leave:", self.state_leave
         #print "current discards:", self.state_discard
@@ -152,11 +167,16 @@ class Scanner(object):
             if tokname in self.state_enter:
                 states.append(self.state_enter[tokname])
                 #print "entering state", states[-1]
+            if tokname in self.callbacks:
+                ret = self.callbacks[tokname](tokname, tokvalue, tokpos)
+                if ret is None:
+                    continue
+                tokname, tokvalue, tokpos = ret
             if self.must_publish_token(states[-1], tokname, tokvalue):
                 yield tokname, tokvalue, tokpos
         if pos != len(text):
             msg = 'tokenizer stopped at pos %r of %r in "%s" at "%s"' % (
-                    pos, len(text), text, text[pos:pos + 3])
+                  pos, len(text), text, text[pos:pos + 3])
             raise TokenizerException(msg)
 #        return tokenize_iter(text, self.re,
 #                             self.state_discard)
